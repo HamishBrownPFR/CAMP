@@ -1,0 +1,135 @@
+SNPCode,GEPCode,WGSCode,Seed group,TidyName
+GEP_001_CRWT153,GEP_001,GEP_001,Core,CRWT153
+GEP_004_HRZ07_0097_springtype,GEP_004,GEP_004,Catherine,hrz07_0097_springtype
+GEP_005_HRZ07_0097_wintertype,GEP_005,GEP_005,Catherine,hrz07_0097_wintertype
+GEP_006_374_Q7_A4,GEP_006,GEP_006,GeneBank,374_q7_a4
+GEP_007_Afghanistan_48,GEP_007,GEP_007,GeneBank,afghanistan_48
+GEP_008_Afghanistan_55,GEP_008,GEP_008,GeneBank,afghanistan_55
+GEP_009_CNT_1,GEP_009,GEP_009,GeneBank,cnt_1
+GEP_010_DARIUS_GLI_DI,GEP_010,GEP_010,GeneBank,darius_gli_di
+GEP_011_DOYO_333,GEP_011,GEP_011,GeneBank,doyo_333
+GEP_012_DOYO_4,GEP_012,GEP_012,GeneBank,doyo_4
+GEP_013_DOYO_7,GEP_013,GEP_013,GeneBank,doyo_7
+GEP_014_DOYO_924,GEP_014,GEP_014,GeneBank,doyo_924
+GEP_015_DOYO_961,GEP_015,GEP_015,GeneBank,doyo_961
+GEP_016_ETAYA_26,GEP_016,GEP_016,GeneBank,etaya_26
+GEP_017_Etaya_28,GEP_017,GEP_017,GeneBank,etaya_28
+GEP_018_ETAYA_31,GEP_018,GEP_018,GeneBank,etaya_31
+GEP_019_Etaya_32,GEP_019,GEP_019,GeneBank,etaya_32
+GEP_020_ETAYA_33,GEP_020,GEP_020,GeneBank,etaya_33
+GEP_021_ETAYA_34,GEP_021,GEP_021,GeneBank,etaya_34
+GEP_022_Ex_Iraq_39,GEP_022,GEP_022,GeneBank,ex_iraq_39
+GEP_023_Ex_Iraq_40,GEP_023,GEP_023,GeneBank,ex_iraq_40
+GEP_024_EX_IRAQ_50,GEP_024,GEP_024,GeneBank,ex_iraq_50
+GEP_025_EX_MOROCCO_27,GEP_025,GEP_025,GeneBank,ex_morocco_27
+GEP_026_Fortunato_P_S_681,GEP_026,GEP_026,GeneBank,fortunato_p_s_681
+GEP_027_France_CI_2241,GEP_027,GEP_027,GeneBank,france_ci_2241
+GEP_028_GOYA,GEP_028,GEP_028,GeneBank,goya
+GEP_029_INTOTO_24,GEP_029,GEP_029,GeneBank,intoto_24
+GEP_030_INTOTO_3,GEP_030,GEP_030,GeneBank,intoto_3
+GEP_031_INTOTO_4,GEP_031,GEP_031,GeneBank,intoto_4
+GEP_032_INTOTO_5,GEP_032,GEP_032,GeneBank,intoto_5
+GEP_033_INTOTO_8,GEP_033,GEP_033,GeneBank,intoto_8
+GEP_034_KENYA_PAGE,GEP_034,GEP_034,GeneBank,kenya_page
+GEP_035_Kokako,GEP_035,GEP_035,GeneBank,kokako
+GEP_036_Libellula,GEP_036,GEP_036,GeneBank,libellula
+GEP_037_LONTRA,GEP_037,GEP_037,GeneBank,lontra
+GEP_038_Lyallpur_18,GEP_038,GEP_038,GeneBank,lyallpur_18
+GEP_039_Mezohegyeser_banati,GEP_039,GEP_039,GeneBank,mezohegyeser_banati
+GEP_040_NADA_2,GEP_040,GEP_040,GeneBank,nada_2
+GEP_041_NADA_3,GEP_041,GEP_041,GeneBank,nada_3
+GEP_042_NEPALI,GEP_042,GEP_042,GeneBank,nepali
+GEP_043_Oroua,GEP_043,GEP_043,GeneBank,oroua
+GEP_044_Poland_5,GEP_044,GEP_044,GeneBank,poland_5
+GEP_045_Pusa_101,GEP_045,GEP_045,GeneBank,pusa_101
+GEP_046_PUSA_54,GEP_046,GEP_046,GeneBank,pusa_54
+GEP_047_Rongotea,GEP_047,GEP_047,GeneBank,rongotea
+GEP_048_Sind_30,GEP_048,GEP_048,GeneBank,sind_30
+GEP_049_TRIGO_COLONIAL,GEP_049,GEP_049,GeneBank,trigo_colonial
+GEP_050_Univ_READING_383,GEP_050,GEP_050,GeneBank,univ_reading_383
+GEP_051_Univ_READING_456,GEP_051,GEP_051,GeneBank,univ_reading_456
+GEP_052_Univ_Reading_470,GEP_052,GEP_052,GeneBank,univ_reading_470
+GEP_053_Univ_READING_506,GEP_053,GEP_053,GeneBank,univ_reading_506
+GEP_054_Univ_READING_522,GEP_054,GEP_054,GeneBank,univ_reading_522
+GEP_055_Univ_READING_96,GEP_055,GEP_055,GeneBank,univ_reading_96
+GEP_056_Univ_Reading_a1120,GEP_056,GEP_056,GeneBank,univ_reading_a1120
+GEP_057_Univ_Reading_a1804,GEP_057,GEP_057,GeneBank,univ_reading_a1804
+GEP_058_Univ_Reading_a1805,GEP_058,GEP_058,GeneBank,univ_reading_a1805
+GEP_059_Univ_READING_A1829,GEP_059,GEP_059,GeneBank,univ_reading_a1829
+GEP_060_Univ_Reading_a310,GEP_060,GEP_060,GeneBank,univ_reading_a310
+GEP_061_YAKTANA_5,GEP_061,GEP_061,GeneBank,yaktana_5
+MPL_001_acbarrie,GEP_062,MPL_001,Majic,acbarrie
+MPL_002_alsen,GEP_063,MPL_002,Majic,alsen
+MPL_003_baxter,GEP_064,MPL_003,Majic,baxter
+MPL_004_chara,GEP_065,MPL_004,Majic,chara
+MPL_005_pastor,GEP_066,MPL_005,Majic,pastor
+MPL_006_volcani,GEP_067,MPL_006,Majic,volcani
+MPL_008_xiaoyan54,GEP_069,MPL_008,Majic,xiaoyan54
+WGS_001_ClaireA,GEP_075,WGS_001,Phenology 64,claire
+WGS_002_AmarokA,GEP_071,WGS_002,Core,Amarok
+WGS_003_OtaneA,GEP_090,WGS_003,Core,Otane
+WGS_004_ConquestA,!!!!NotInBiotron!!!!,WGS_004,,conquest
+WGS_005_AspiringA,!!!!NotInBiotron!!!!,WGS_005,,aspiring
+WGS_006_RegencyA,GEP_092,WGS_006,Phenology 64,regency
+WGS_007_CenaturA,GEP_074,WGS_007,Phenology 64,cenatur
+WGS_008_SolsticeA,!!!!NotInBiotron!!!!,WGS_008,,solstice
+WGS_009_WestonA,GEP_099,WGS_009,Phenology 64,weston
+WGS_010_AlbericA,GEP_070,WGS_010,Phenology 64,alberic
+WGS_011_EquinoxA,!!!!NotInBiotron!!!!,WGS_011,,equinox
+WGS_012_ExcedeA,GEP_079,WGS_012,Phenology 64,excede
+WGS_013_OptionA,GEP_089,WGS_013,Phenology 64,option
+WGS_014_RichmondA,!!!!NotInBiotron!!!!,WGS_014,,richmond
+WGS_015_RobigusA,GEP_093,WGS_015,Phenology 64,robigus
+WGS_016_SavannahA,!!!!NotInBiotron!!!!,WGS_016,,savannah
+WGS_017_TankerA,!!!!NotInBiotron!!!!,WGS_017,,tanker
+WGS_018_WakanuiA,GEP_098,WGS_018,Phenology 64,wakanui
+WGS_019_Einstein,GEP_078,WGS_019,Phenology 64,einstein
+WGS_020_HiltonA,GEP_081,WGS_020,Phenology 64,hilton
+WGS_021_Phoenix,!!!!NotInBiotron!!!!,WGS_021,,phoenix
+WGS_022_Sage,GEP_094,WGS_022,Phenology 64,sage
+WGS_023_CFR03_195,!!!!NotInBiotron!!!!,WGS_023,,cfr03_195
+WGS_024_CFR03_196,!!!!NotInBiotron!!!!,WGS_024,,cfr03_196
+WGS_025_Marcro,GEP_085,WGS_025,Phenology 64,marcro
+WGS_026_Tribute,!!!!NotInBiotron!!!!,WGS_026,,tribute
+WGS_027_Consort,GEP_076,WGS_027,Phenology 64,consort
+WGS_028_Domino,!!!!NotInBiotron!!!!,WGS_028,,domino
+WGS_029_Monad,!!!!NotInBiotron!!!!,WGS_029,,monad
+WGS_030_2000116,!!!!NotInBiotron!!!!,WGS_030,,2000116
+WGS_031_Kohika,GEP_083,WGS_031,Phenology 64,kohika
+WGS_032_Marshall,!!!!NotInBiotron!!!!,WGS_032,,marshall
+WGS_033_Morph,GEP_088,WGS_033,Phenology 64,morph
+WGS_034_Saracen,GEP_095,WGS_034,Core,Saracen
+WGS_035_Torlesse,GEP_096,WGS_035,Phenology 64,torlesse
+WGS_036_Vanquish,GEP_097,WGS_036,Phenology 64,vanquish
+WGS_037_Aquilla,!!!!NotInBiotron!!!!,WGS_037,,aquilla
+WGS_038_BakkerGold,!!!!NotInBiotron!!!!,WGS_038,,bakkergold
+WGS_039_Buster,!!!!NotInBiotron!!!!,WGS_039,,buster
+WGS_040_CRWT146,GEP_077,WGS_040,Phenology 64,crwt146
+WGS_041_Endeavour,!!!!NotInBiotron!!!!,WGS_041,,endeavour
+WGS_042_Genghis,GEP_080,WGS_042,Phenology 64,genghis
+WGS_043_KWW29,!!!!NotInBiotron!!!!,WGS_043,,kww29
+WGS_044_Raffles,GEP_091,WGS_044,Phenology 64,raffles
+WGS_045_Commando,!!!!NotInBiotron!!!!,WGS_045,,commando
+WGS_046_BatenSpring,GEP_072,WGS_046,Core,BattenSpring
+WGS_047_BattenWinter,GEP_073,WGS_047,Core,BattenWinter
+WGS_048_Majestic,GEP_086,WGS_048,Phenology 64,majestic
+WGS_050_H45,!!!!NotInBiotron!!!!,WGS_050,,h45
+WGS_051_Janz,GEP_082,WGS_051,Phenology 64,janz
+WGS_052_Kotuku,!!!!NotInBiotron!!!!,WGS_052,,kotuku
+WGS_053_KWM7,!!!!NotInBiotron!!!!,WGS_053,,kwm7
+WGS_055_KWW37,GEP_084,WGS_055,Phenology 64,kww37
+WGS_056_KWW38,!!!!NotInBiotron!!!!,WGS_056,,kww38
+WGS_057_Lang,!!!!NotInBiotron!!!!,WGS_057,,lang
+WGS_058_Mackellar,!!!!NotInBiotron!!!!,WGS_058,,mackellar
+WGS_059_McCubbin,GEP_087,WGS_059,Phenology 64,mccubbin
+WGS_060_Oakley,!!!!NotInBiotron!!!!,WGS_060,,oakley
+WGS_061_Rubric,!!!!NotInBiotron!!!!,WGS_061,,rubric
+WGS_062_Sapphire,!!!!NotInBiotron!!!!,WGS_062,,sapphire
+WGS_063_Sunco,!!!!NotInBiotron!!!!,WGS_063,,sunco
+WGS_064_Yitpi,GEP_100,WGS_064,Phenology 64,yitpi
+WGS_067_CRWT168,GEP_002,WGS_067,Catherine,crwt168
+WGS_084_Empress,GEP_003,WGS_084,Catherine,empress
+WGS_091_Westonia,GEP_068,WGS_091,Majic,westonia
+WGS_213_1_CRWT160,!!!!NotInBiotron!!!!,WGS_213,,1_crwt160
+WGS_214_2_CRWT161,!!!!NotInBiotron!!!!,WGS_214,,2_crwt161
+WGS_236_1_Rongotea,!!!!NotInBiotron!!!!,WGS_236,,1_rongotea
