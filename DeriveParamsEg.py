@@ -32,7 +32,7 @@ pd.set_option('display.max_rows',1000)
 
 # ## Bring in data
 
-cult = 'BattenWinter'
+cult = 'Amarok'
 
 CampVrnParams = pd.read_excel('CampVrnParams.xlsx',index_col='Cultivar')
 AmarokParams = CampVrnParams.loc[cult,:]

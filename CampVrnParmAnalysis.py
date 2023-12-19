@@ -268,7 +268,7 @@ Graph = plt.figure(figsize=(10,25))
 ax = Graph.add_subplot(1,1,1)
 MakeResponsePlot(Title = 'Photoperiod responses',
                  highlights = ['Janz','janz','Yitpi','yitpi'],#['Otane','BattenSpring','Saracen','Amarok','BattenWinter','CRWT153']
-                 Trts = ['rVrnBER','rApDevMER'],
+                 Trts = ['rVrnBER','rVrnMER'],
                  sortT = 'rVrnBER',
                  xlab = 'Haun Stage',
                  xmin = 0,

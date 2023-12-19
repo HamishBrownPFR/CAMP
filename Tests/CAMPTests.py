@@ -15,7 +15,6 @@
 
 import datetime as dt
 import pandas as pd
-import qgrid
 import numpy as np
 import matplotlib.pyplot as plt
 import math as math 
@@ -77,7 +76,7 @@ def AddVrnPlot(CAMPOutputs,ax,CultName,ylab,xlab,leg):
     lines=['--','--','--',':','--','-',':']
     colors=[CBcolors['gray'],CBcolors['blue'],CBcolors['orange'],CBcolors['orange'],CBcolors['purple'],'k','k']
     p=0
-    vars = ['VrnB','Vrn1','MaxVrn2','Vrn2','Vrn3','ApDev','MaxApDev']
+    vars = ['VrnB','Vrn1','MaxVrn2','Vrn2','Vrn3','ApDev','MaxVrn']
     for var in vars:
         y = CAMPOutputs.loc[:,var].where(CAMPOutputs.loc[:,var]!=0,np.nan)
         plt.plot(CAMPOutputs.loc[:,'HS'],y,label=var,lw=3,color=colors[p],ls=lines[p])
@@ -415,7 +414,7 @@ def GraphGeneExpression(UnitTestResults):
         for t in Temps:
             for p in Pps:
                 AddData('VrnB',1,l,j,d,t,p,UnitTestResults.loc[(d,t,p),:],axs)
-                AddData('MaxApDev',2,l,j,d,t,p,UnitTestResults.loc[(d,t,p),:],axs)
+                AddData('MaxVrn',2,l,j,d,t,p,UnitTestResults.loc[(d,t,p),:],axs)
                 AddData('ApDev',3,l,j,d,t,p,UnitTestResults.loc[(d,t,p),:],axs)
                 AddData('Vrn1',4,l,j,d,t,p,UnitTestResults.loc[(d,t,p),:],axs)
                 AddData('Vrn2',5,l,j,d,t,p,UnitTestResults.loc[(d,t,p),:],axs)
