@@ -255,8 +255,8 @@ Graph = plt.figure(figsize=(10,25))
 ax = Graph.add_subplot(1,1,1)
 MakeResponsePlot(Title = 'Vrn2 responses',
                  highlights = ['Janz','janz','Yitpi','yitpi'],#['Otane','BattenSpring','Saracen','Amarok','BattenWinter','CRWT153'],
-                 Trts = ['rVrn2'],
-                 sortT = 'rVrn2',
+                 Trts = ['mVrn2'],
+                 sortT = 'mVrn2',
                  xlab = '/Haun Stage',
                  xmin = 0,
                  xmax = 3,
