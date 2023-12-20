@@ -49,4 +49,4 @@ camp.Vrn2Plots(AmarokParams,ax,cult)
 
 graph  = plt.figure(figsize=(5,5))
 ax = graph.add_subplot(1,1,1)
-camp.Vrn1Plots(AmarokParams, ax,cult,5,3)    
+camp.Vrn1Plots(AmarokParams, ax,cult,5,1.8)    
