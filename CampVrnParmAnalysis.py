@@ -189,6 +189,25 @@ MakeResponsePlot(Title = 'Vernalisation x Photoperiod Response',
                  ymax = 169,
                  LabLegPos=1)
 
+graph = plt.figure(figsize=(20,15))
+pan=1
+CampVrnParams.loc
+for c in ['Axe','Bolac','Wyalkatchem']:
+    params = camp.deriveVrnParams(CampInputs.loc[c,:])
+    CampVrnParams.loc[c,params.index] = params
+    ax = graph.add_subplot(4,4,pan)
+    camp.plotVITS(params, 3,c, ymax=2.5,xmax=11)
+    pan+=1
+    ax = graph.add_subplot(4,4,pan)
+    camp.boundPlots(params, ax, c, ymax=2.5,xmax=11)
+    pan+=1
+    ax = graph.add_subplot(4,4,pan)
+    camp.Vrn2Plots(params,ax,c, ymax=2.5,xmax=6)  
+    pan+=1
+    ax = graph.add_subplot(4,4,pan)
+    camp.Vrn1Plots(params, ax,c,ymax=2.5,xmax=4)  
+    pan+=1
+
 graph = plt.figure(figsize=(20,600))
 pan=1
 CampVrnParams.loc

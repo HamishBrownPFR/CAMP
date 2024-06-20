@@ -226,19 +226,19 @@ def MakeGenotypeBarPlot(Geno,Axis):
 #Sunlanm - positive
 #Axe - little response
 FLNegs = pd.DataFrame(columns = ['CL','WL','CS','WS'])
-for c in ['AXE','BOLAC','SUNLAMB','WYALKATCHEM']:
+for c in ['AXE','BOLAC','WYALKATCHEM']:
     FLNegs.loc[c,:] = FLNData.loc[(slice(None),slice(None),c),'Value'].groupby(['Photoperiod','VegPhaseTemp']).mean().values
 #FLNegs.to_pickle('FLNegs.pkl')
 
 # +
-Fig = plt.figure(figsize=(8, 5))
+Fig = plt.figure(figsize=(8, 2.5))
 pos=1
 for c in FLNegs.index:
     WL = FLNegs.loc[c,'WL']
     CL = FLNegs.loc[c,'CL']
     WS = FLNegs.loc[c,'WS']
     CS = FLNegs.loc[c,'CS']
-    Axis = Fig.add_subplot(2,2,pos)
+    Axis = Fig.add_subplot(1,3,pos)
     camp.plotFLNs(CL, CS, WS, WL,Axis,8,20)
     camp.plotLNlines(CL, CS, WS, WL,8)
     plt.text(0.05,0.95,c,transform=Axis.transAxes)

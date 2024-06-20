@@ -84,17 +84,20 @@ def AddVrnPlot(CAMPOutputs,ax,CultName,ylab,xlab,leg):
     TickLabs = CAMPOutputs.loc[:,'Stage'].dropna()
     TickPoss = CAMPOutputs.loc[TickLabs.index,'HS']
     plt.plot([-2,TickPoss.iloc[2],np.nan,-2,TickPoss.iloc[3]],[1,1,np.nan,2,2],ls='dotted',color='k')
-    SetStageTicks(CAMPOutputs,ax,TickLabs,TickPoss)
+    
     if ylab == True:
         plt.ylabel('AppVrn expression',fontsize=12)
     else:
         plt.tick_params(axis='y', labelleft=False)
     if xlab == True:
         plt.xlabel('Haun Stage',fontsize=12)
+        SetStageTicks(ax,TickLabs,TickPoss)
+    else:
+        plt.tick_params(axis='x', labelbottom=False)
     if leg == True:
         plt.legend(loc=1)
 
-def SetStageTicks(CAMPOutputs,ax,TickLabs,TickPoss):
+def SetStageTicks(ax,TickLabs,TickPoss):
     TickLabs = ['$G$','$E$','$VI^{HS}$\n('+'%.1f'%TickPoss.iloc[2]+')','$TS^{HS}$\n('+'%.1f'%TickPoss.iloc[3]+')','$FL^{HS}$\n('+'%.1f'%TickPoss.iloc[4]+')']
     heights = [0,0,1,2,2]
     pos=0
@@ -204,10 +207,10 @@ plt.yticks([0,0.5,1.0,1.5,2.0])
 
 Fig = plt.figure(figsize=(7,6))
 #First example
-MakeSingleScenarioVrnGraph2('Lincoln','L','C','PNBattenWinter',2,2,1,Fig,90,True,False,True,True)
-MakeSingleScenarioVrnGraph2('Lincoln','S','C','PNBattenWinter',2,2,2,Fig,90,False,False,False,True)
-MakeSingleScenarioVrnGraph2('Lincoln','L','W','PNBattenWinter',2,2,3,Fig,90,True,True,False,True)
-MakeSingleScenarioVrnGraph2('Lincoln','S','W','PNBattenWinter',2,2,4,Fig,90,False,True,False,True)
+MakeSingleScenarioVrnGraph2('Lincoln','L','C','BattenWinter',2,2,1,Fig,90,True,False,True,True)
+MakeSingleScenarioVrnGraph2('Lincoln','S','C','BattenWinter',2,2,2,Fig,90,False,False,False,True)
+MakeSingleScenarioVrnGraph2('Lincoln','L','W','BattenWinter',2,2,3,Fig,90,True,True,False,True)
+MakeSingleScenarioVrnGraph2('Lincoln','S','W','BattenWinter',2,2,4,Fig,90,False,True,False,True)
 Fig.patch.set_facecolor('white')
 plt.tight_layout()
 #Fig.savefig('scenario.png')

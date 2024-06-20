@@ -28,6 +28,16 @@ import matplotlib.dates as mdates
 import CAMP as camp
 # %matplotlib inline
 
+#Example figure using Brooking and Jamieson Data
+Fig = plt.figure(figsize=(3,3))
+Axis = Fig.add_subplot(1,1,1)
+CL = 8
+CS = 12
+WS = 14
+WL = 18
+camp.plotFLNs(CL,CS,WS,WL,Axis,8,20)
+camp.plotLNlines(CL, CS, WS, WL,8)
+
 # +
 PP16NonSD = dt.date(2014,1,28)
 PP16NonSD = pd.to_datetime(PP16NonSD)
@@ -80,8 +90,8 @@ Data.loc[('YES',16,'Nil','CRWT153',240),'HS'][1:3] = np.nan
 # ## Calculate Final leaf number and total organ number
 
 PhenoStages = pd.DataFrame()
-PhenoStages.loc[:,'FLN'] = Data.loc['YES',:].mean(axis=0,level=['PhotoP','Vern','Cult']).loc[:,'HS']
-PhenoStages.loc[:,'TON'] = Data.loc['YES',:].mean(axis=0,level=['PhotoP','Vern','Cult']).loc[:,'PN']
+PhenoStages.loc[:,'FLN'] = Data.loc['YES',:].groupby(axis=0,level=['PhotoP','Vern','Cult']).mean('numeric_only').loc[:,'HS']
+PhenoStages.loc[:,'TON'] = Data.loc['YES',:].groupby(axis=0,level=['PhotoP','Vern','Cult']).mean('numeric_only').loc[:,'PN']
 PhenoStages.loc[:,'SN'] = PhenoStages.loc[:,'TON'].subtract(PhenoStages.loc[:,'FLN'])
 
 PhenoStages
@@ -112,7 +122,7 @@ for Pp in Photoperiods:
 Fig.patch.set_facecolor('white')
 
 # +
-CultNames = pd.DataFrame(index = Cultivars,columns=['Name'],data=["Otane","BattenSpringing","'Saracen'","BattenWinterter","Amarok",'CRWT153'])
+CultNames = pd.DataFrame(index = Cultivars,columns=['Name'],data=["'Otane'","'Batten' spring","'Saracen'","'Batten' winter","'Amarok'",'CRWT153'])
 
 AllFLNData = Data.loc['YES',:].HS.reset_index().drop(['Date','Sample'],axis=1)
 
@@ -154,7 +164,57 @@ for cult in Cultivars:
         plt.tick_params(axis='y', which='both', left=True,right=False, labelleft=False)
     else:
         plt.tick_params(axis='y', which='both', left=True,right=False, labelleft=True)
-    plt.text(0.05,0.95,cult,transform=Axis.transAxes)
+    plt.text(0.05,0.95,CultNames.loc[cult,'Name'],transform=Axis.transAxes)
+    Pos +=1
+plt.tight_layout()
+#Fig.savefig('C:\\Users\\cflhxb\\Dropbox\\WheatFlowering\\Fig3.jpg',format='jpg',dpi=300)  
+Fig.patch.set_facecolor('white')
+
+# +
+CultNames = pd.DataFrame(index = Cultivars,columns=['Name'],data=["'Otane'","'Batten' spring","'Saracen'","'Batten' winter","'Amarok'",'CRWT153'])
+
+AllFLNData = Data.loc['YES',:].HS.reset_index().drop(['Date','Sample'],axis=1)
+
+width = 0.4
+ind = np.arange(4) + width
+Fig = plt.figure(figsize=(10,6))
+Photoperiods = [16,8]
+Vernalisations = ['Full','Nil']
+
+Pos = 1
+for cult in Cultivars:
+    Axis = Fig.add_subplot(2,3,Pos)
+    trt = 0
+    colors = ['b','b','r','r']
+    fills = ['b','w','w','r']
+    for (Vn,Pp) in [("Full",16),("Full",8),("Nil",8),("Nil",16)]:
+        Filter = (AllFLNData.PhotoP == Pp) & (AllFLNData.Vern == Vn) & (AllFLNData.Cult == cult)
+        data = AllFLNData.loc[Filter,'HS']
+        numObs = len(data)
+        centre = ind[trt]+.2
+        index = np.add(centre-.2,np.multiply(0.8,np.divide([float(x) for x in range(numObs)],numObs)))
+        plt.plot(index,data,'o',ms=1,mec=colors[trt],mfc=fills[trt],mew=0.5)
+        trt +=1
+    
+    CL = PhenoStages.loc[(16,'Full',cult),'FLN']
+    CS = PhenoStages.loc[(8,'Full',cult), 'FLN']
+    WS = PhenoStages.loc[(8,'Nil',cult), 'FLN']
+    WL = PhenoStages.loc[(16,'Nil',cult),'FLN']
+    
+    camp.plotFLNs(CL,CS,WS,WL,Axis,8,20,False)
+    camp.plotLNlines(CL, CS, WS, WL,8)
+    Axis.spines['right'].set_visible(False)
+    Axis.spines['top'].set_visible(False)
+    if Pos in [4,5,6]:
+        plt.tick_params(axis='x', which='both', bottom=True,top=False, labelbottom=True)
+    else:
+        plt.tick_params(axis='x', which='both', bottom=True,top=False, labelbottom=False)
+    if Pos in [2,3,5,6]:
+        plt.tick_params(axis='y', which='both', left=True,right=False, labelleft=False)
+    else:
+        plt.ylabel('Final Leaf Number',fontsize=12)
+        plt.tick_params(axis='y', which='both', left=True,right=False, labelleft=True)
+    plt.text(0.05,0.95,CultNames.loc[cult,'Name'],transform=Axis.transAxes)
     Pos +=1
 plt.tight_layout()
 #Fig.savefig('C:\\Users\\cflhxb\\Dropbox\\WheatFlowering\\Fig3.jpg',format='jpg',dpi=300)  
@@ -171,23 +231,23 @@ FLN_Anova
 
 
 # ## Defining developmental phenotypes
-# From a +/- vernalisation long/short photoperiod factorial we can determine 4 key phenological parameters.
+# From a +/- cold treatment, long/short photoperiod factorial we can determine 4 key phenological parameters.
 #
-# 1. Earlyness per se.  This is the minimum leaf number that would be achieavable if the crop were fully vernalised prior to emergence and then grown in a fully inductive environment. This can be quantified as: 
+# 1. Minimum Final Leaf Number.  This is the minimum leaf number that would be achieavable if the crop were fully vernalised prior to HS=2.0 and then grown in a long photoperiod. This can be quantified as: 
 #
-# EPS = FLN_Full16h
+# MinFLN = FLN_Full16h
 #
-# 2. Photoperiod responsiveness.  This occurs following vernalisation when shorter photo periods increase the FLN of wheat.  To determine this in the absence of confounding from vernalisation effects it should be calculated as the difference between FLN for long and short photoperiod treatments with full vernalisation.
+# 2. Photoperiod responsiveness.  This occurs following vernalisation when shorter photo periods increase the FLN of wheat.  To determine this in the absence of confounding from cold temperature effects it should be calculated as the difference between FLN for long and short photoperiod treatments with cold treatment during prior to HS = 2.
 #
-# PPS = FLN_Full8h - FLN_Full16h
+# PpLN = FLN_Full8h - FLN_Full16h
 #
 # 3. Cold vernalisation sensitivity.  This is the sensitivity of FLN of the cultivar to the absence of cold, i.e and extension of FLN due to warmer tempertures.  This can be calculated as:  
 #
-# CVS = FLN_Full8h - FLN_Nil8h
+# CvLN = FLN_Full8h - FLN_Nil8h
 #
 # 4. Short day vernalisation sensitivity.  This is when shorter  photoperiods decrease the vernalisation requirement.  If photoperiod had no effect on vernalisation we would expect the FLN of an unvernalised crop grown in 8h to be the same as the the FLN of the unvernalised crop grown in 16h plus the photoperiod response of the crop.  The difference between this theoretical FLN and the actual FLN recorded for an unvernalised crop grown at 8h Pp represents the short day vernalisation sensitivity:  
 #
-# SDVS = (FLN_Nil16h + PPS) - FLN_Nil8h
+# PvLN = (FLN_Nil16h + PPS) - FLN_Nil8h
 #
 
 # +
@@ -201,24 +261,24 @@ def sig(p):
     else:
         return '***'
 
-PhenologyTraits = pd.DataFrame(index=Cultivars,columns=['$FLN_{min}$','$^PS$','p $^PS$','$^{CV}S$','p $^{CV}S$','$^{SDV}S$','p $^{SDV}S$'])
+PhenologyTraits = pd.DataFrame(index=Cultivars,columns=['MinLN','PpLN','p PpLN','CvLN','p CvLN','PvLN','p PvLN'])
 for cult in Cultivars:
-    PhenologyTraits.loc[cult,'$FLN_{min}$'] = np.round(PhenoStages.loc[(16,'Full',cult),'FLN'],decimals=2)
-    PhenologyTraits.loc[cult,'$^PS$'] = np.round(PhenoStages.loc[(8,'Full',cult),'FLN'] - PhenoStages.loc[(16,'Full',cult),'FLN'] , decimals=2)
+    PhenologyTraits.loc[cult,'MinLN'] = np.round(PhenoStages.loc[(16,'Full',cult),'FLN'],decimals=2)
+    PhenologyTraits.loc[cult,'PpLN'] = np.round(PhenoStages.loc[(8,'Full',cult),'FLN'] - PhenologyTraits.loc[cult,'MinLN'] , decimals=2)
     LongPp = Data.loc[('YES',16,'Full',cult),['HS']]
     ShortPp = Data.loc[('YES',8,'Full',cult),['HS']]
     PpSensitive = stats.ttest_ind(LongPp,ShortPp)
-    PhenologyTraits.loc[cult,'p $^PS$'] = sig(PpSensitive.pvalue[0])
-    PhenologyTraits.loc[cult,'$^{CV}S$'] = np.round(PhenoStages.loc[(16,'Nil',cult),'FLN'] - PhenoStages.loc[(16,'Full',cult),'FLN'],decimals=2)
-    FullVrn = Data.loc[('YES',16,'Full',cult),['HS']]
-    NilVrn = Data.loc[('YES',16,'Nil',cult),['HS']]
+    PhenologyTraits.loc[cult,'p PpLN'] = sig(PpSensitive.pvalue[0])
+    PhenologyTraits.loc[cult,'CvLN'] = np.round(max(0,PhenoStages.loc[(8,'Nil',cult),'FLN'] - PhenologyTraits.loc[cult,'MinLN'] - PhenologyTraits.loc[cult,'PpLN']),decimals=2)
+    FullVrn = Data.loc[('YES',8,'Nil',cult),['HS']]
+    NilVrn =  PhenologyTraits.loc[cult,'MinLN'] + PhenologyTraits.loc[cult,'PpLN']
     VrnSensitive = stats.ttest_ind(NilVrn,FullVrn)
-    PhenologyTraits.loc[cult,'p $^{CV}S$'] = sig(VrnSensitive.pvalue[0])
-    NoSVS = Data.loc[('YES',16,'Nil',cult),['HS']] + PhenologyTraits.loc[cult,'$^PS$']
-    SDVS = Data.loc[('YES',8,'Nil',cult),['HS']]
+    PhenologyTraits.loc[cult,'p CvLN'] = sig(VrnSensitive.pvalue[0])
+    NoSVS = PhenologyTraits.loc[cult,'MinLN'] + PhenologyTraits.loc[cult,'CvLN']
+    SDVS = Data.loc[('YES',16,'Nil',cult),['HS']]
     SDVSensitivie = stats.ttest_ind(NoSVS,SDVS)
-    PhenologyTraits.loc[cult,'p $^{SDV}S$'] = sig(SDVSensitivie.pvalue[0])
-    PhenologyTraits.loc[cult,'$^{SDV}S$'] = np.round(PhenoStages.loc[(16,'Nil',cult),'FLN'] + PhenologyTraits.loc[cult,'$^PS$'] - PhenoStages.loc[(8,'Nil',cult),'FLN'], decimals=2)
+    PhenologyTraits.loc[cult,'p PvLN'] = sig(SDVSensitivie.pvalue[0])
+    PhenologyTraits.loc[cult,'PvLN'] = np.round(PhenoStages.loc[(16,'Nil',cult),'FLN'] - PhenologyTraits.loc[cult,'MinLN'] - PhenologyTraits.loc[cult,'CvLN'] , decimals=2)
     
 PhenologyTraits.to_excel('./ProcessedData/PhenoTable.xlsx',)
 PhenologyTraits
@@ -226,7 +286,7 @@ PhenologyTraits
 
 # -
 
-PhenologyTraits.columns = ['MLN','PPS','p $^PS$','CVS','p $^{CV}S$','SDVS','p $^{SDV}S$']
+PhenologyTraits.columns = ['MLN','PPS','p ^PS','CVS','p ^{CV}S','SDVS','p ^{SDV}S']
 
 # ## Graph spikelet number to find patterns
 
@@ -406,8 +466,8 @@ PhenoStages.to_csv('.\ProcessedData\PhenoStages.csv',header=True)
 
 Index = pd.MultiIndex.from_product([Photoperiods,Vernalisations],names = ['Photoperiod','Vernalisation'])
 colors = pd.DataFrame(index = Index, columns = ['mec','mfc','alpha'],
-            data=np.transpose([['b','r','b','r'],['b','r','w','w'],[0.3,0.3,0.6,0.6]]))
-PpSymbols = pd.DataFrame(index = Photoperiods,columns=['Name'],data=['$_{long}P$','$_{short}P$'])
+            data=np.transpose([['b','r','b','r'],['b','r','w','w'],[0.2,0.2,0.5,0.5]]))
+PpSymbols = pd.DataFrame(index = Photoperiods,columns=['Name'],data=['$(L)$','$(S)$'])
 colors.alpha = pd.to_numeric(colors.alpha)
 Fig = plt.figure(figsize=(6.92,6.92))
 Position = 1 
@@ -428,7 +488,17 @@ for Cultivar in Cultivars:
                      markersize=3, label= str(Pp) + ' ' + Vern)
             plt.plot(PhenoStages.loc[(Pp,Vern,Cultivar),'FLN'], 
                      PhenoStages.loc[(Pp,Vern,Cultivar),'TON'], 
-                     'o',mec = colors.loc[(Pp,Vern),'mec'],
+                     's',mec = colors.loc[(Pp,Vern),'mec'],
+                     mfc = colors.loc[(Pp,Vern),'mfc'],
+                     alpha=1.0,markersize=7,mew=2, label = '_nolegend_')
+            plt.plot(PhenoStages.loc[(Pp,Vern,Cultivar),'HSFI'], 
+                     PhenoStages.loc[(Pp,Vern,Cultivar),'ONFI'], 
+                     '^',mec = colors.loc[(Pp,Vern),'mec'],
+                     mfc = colors.loc[(Pp,Vern),'mfc'],
+                     alpha=1.0,markersize=7,mew=2, label = '_nolegend_')
+            plt.plot(PhenoStages.loc[(Pp,Vern,Cultivar),'HSTS'], 
+                     PhenoStages.loc[(Pp,Vern,Cultivar),'TON'], 
+                     'v',mec = colors.loc[(Pp,Vern),'mec'],
                      mfc = colors.loc[(Pp,Vern),'mfc'],
                      alpha=1.0,markersize=7,mew=2, label = '_nolegend_')
             #plt.legend(loc=4, fontsize=20)
@@ -537,6 +607,11 @@ for cult in Cultivars:
 plt.tight_layout()
 #Fig.savefig('C:\\Users\\cflhxb\\Dropbox\\WheatFlowering\\Fig6.jpg',format='jpg',dpi=100)      
 Fig.patch.set_facecolor('white')
+# -
+
+PhenoStages
+
+Cultivars
 
 # +
 PhenoStages.loc[:,['HSFI','FITS']]
@@ -563,20 +638,20 @@ for cult in Cultivars:
         CultName = CultNames.loc[cult,'Name']
         if Pos % 2 == 0:
             plt.tick_params(axis='y', which='both', left=True,right=False, labelleft=False)
-            plt.text(0,1.06,CultName,
-                     horizontalalignment='center',transform=Axis.transAxes,fontsize=12)
             plt.text(.05,.8,'$TS^{HS}-VS^{HS}$',transform=Axis.transAxes,fontsize=10)
         else:
             plt.ylabel('Haun Stage')
             plt.text(.05,.8,'$VS^{HS}$',transform=Axis.transAxes,fontsize=10)
+            plt.text(1.06,1.06,"    "+CultName,
+                     horizontalalignment='center',transform=Axis.transAxes,fontsize=12)
         if Pos <11:
             plt.tick_params(axis='x', which='both', bottom=True,top=False, labelbottom=False)
             plt.xticks(ind)
         else:
-            plt.xticks(ind,['$_{full}V_{long}P$','$_{full}V_{short}P$', '$_{nil}V_{long}P$', '$_{nil}V_{short}P$'],rotation=90)
+            plt.xticks(ind,['CL','CS', 'WL', 'WS'],rotation=90)
         plt.xlim(-0.5,3.5)
         plt.subplots_adjust(hspace=0.4)
         Pos +=1
-plt.tight_layout()
+#plt.tight_layout()
 #Fig.savefig('C:\\Users\\cflhxb\\Dropbox\\WheatFlowering\\Fig6.jpg',pad_inches=10,dpi=300)
 Fig.patch.set_facecolor('white')
