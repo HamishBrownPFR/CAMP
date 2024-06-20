@@ -1,0 +1,213 @@
+# Compile All qPCR Data
+
+## Meeghan Pither-Joyce, John McCallum
+## May 2016
+
+- Location of workbooks:
+    - qPCR data
+https://iplant.plantandfood.co.nz/project/I130806/Research/GEP_qPCR_results.xlsx
+    - sample data
+https://iplant.plantandfood.co.nz/project/I130806/Research/ResultswheatGEP.xlsx
+- first need to set access credentials via system
+
+```{r}
+library(iplantAcquiR)
+handle <- iplant_handle(username = Sys.getenv("USER"),
+                        password = Sys.getenv("IPLANT_PASSWORD"))
+handle <- iplant_authenticate(handle)
+```
+
+```{r}
+library(openxlsx)
+library(data.table)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+```
+
+### Read Samples from Hamishes Sheet
+
+```{r}
+sample_filename <- iplant_acquire(handle = handle,
+                           url = "https://iplant.plantandfood.co.nz/project/I130806/Research/ResultswheatGEP.xlsx")
+(sheetnames <- getSheetNames(sample_filename))
+```
+
+```{r}
+sample_sheetdt <- data.table(read.xlsx(sample_filename,'RNA plate order',detectDates = TRUE))
+sample_sheetdt <- sample_sheetdt[,sample_well:=paste0(Row,Col)]
+sample_sheetdt <- sample_sheetdt[,X11:=NULL]
+setkey(sample_sheetdt,Plate,sample_well)
+head(sample_sheetdt)
+```
+
+```{r}
+sample_sheetdt <- sample_sheetdt[Vern=='none',Vern:='None']
+sample_sheetdt <- sample_sheetdt[Vern=='full',Vern:='Full']
+```
+
+### Read list of qPCR Data Sheets
+
+
+```{r}
+filename <- iplant_acquire(handle = handle,
+                           url = "https://iplant.plantandfood.co.nz/project/I130806/Research/GEP_qPCR_results.xlsx")
+
+```
+
+```{r}
+(sheetnames <- getSheetNames(filename))
+```
+
+- sheets with "results" suffix  laid out in 96 > 384 > RNA plate order
+- beware some samples multiple days
+- new exclusion list to be added of dodgey samples- exclude these from "results"
+set
+- remove 29 cutoff
+
+```{r}
+(dataSheets <- sheetnames[grepl("_results", sheetnames)])
+```
+
+### Read out the well config
+
+```{r}
+trans_dt <- data.table(read.xlsx(filename,'96well to 384well'))
+setnames(trans_dt,names(trans_dt),gsub('(\\.)+','_',names(trans_dt)))
+head(trans_dt)
+```
+
+### Read out the Excludes
+
+- samples which were repeated or mixed up.
+- drop these from first result set
+- Fix  well addresses and column names
+
+```{r}
+exclude_dt <- data.table(read.xlsx(filename,'exclude',startRow = 2,detectDates = TRUE))
+setnames(exclude_dt,c('ex.sample.plate','sample.date','ex.sample.plate.well','Sample'),c('Plate','SampleDate','sample_well','Name'))
+exclude_dt <- exclude_dt[,sample_well:=gsub("^(\\d+)(\\D)","\\2\\1",sample_well)]
+setkey(exclude_dt,Plate,sample_well)
+head(exclude_dt)
+
+```
+
+```{r}
+dim(exclude_dt)
+```
+
+There are duplicated samples in here-unique by date
+
+e.g.
+
+```{r}
+exclude_dt[Name=='BW279']
+```
+
+```{r}
+setkey(exclude_dt,Name)
+(dupl_samples <- exclude_dt[duplicated(exclude_dt),Name])
+exclude_dt[Name %in% dupl_samples]
+```
+
+```{r}
+exclude_dt[,Name]
+```
+
+### Read out one table
+
+```{r}
+GEP1_VRN1_resultsDT <- data.table(read.xlsx(filename,'GEP1_VRN1_results',startRow=2))
+names(GEP1_VRN1_resultsDT)[!grepl("^Tm",names(GEP1_VRN1_resultsDT))]
+head(GEP1_VRN1_resultsDT)
+```
+
+>Note that there are Tm1, TM and Tm2 in these
+
+### Function to read a sheet and add info
+
+```{r}
+# read sheet X and return a data.table
+read_qPCR <- function(X) {
+  require(openxlsx)
+  require(data.table)
+  require(dplyr)
+  wb_path <- filename
+  my_sheet_data <- strsplit(X,split='_')[[1]]
+  my_plate <- my_sheet_data[1]
+  my_gene <- my_sheet_data[2]
+  my_df <- data.table(read.xlsx(wb_path,X,startRow=2))
+  my_df$gene <- my_gene
+  my_df$plate <- my_plate
+  setnames(my_df,c('Pos','plate'),c('qPCR_well','Plate'))
+  my_df %<>% 
+    inner_join(trans_dt,by='qPCR_well') %>% 
+    select(-contains('Tm')) %>%
+    arrange(sample_well)
+  return(as.data.table(my_df))
+}
+```
+
+### Test it
+
+```{r}
+read_qPCR('GEP1_VRN1_results') %>% head
+```
+
+### Use it
+
+```{r}
+result_dt <- rbindlist(lapply(dataSheets,read_qPCR),fill = TRUE)
+setkey(result_dt,Plate,sample_well)
+```
+
+```{r}
+dim(result_dt)
+head(result_dt)
+```
+
+```{r}
+anyDuplicated(result_dt)
+```
+
+## Now Match on to the Sample Wells
+
+```{r}
+merged <- merge(result_dt,sample_sheetdt,all.x = TRUE)
+head(merged)
+```
+
+## Match to exclusion data
+
+```{r}
+merged <- merge(merged,unique(exclude_dt),all.x=TRUE)
+dim(merged)
+```
+
+```{r}
+head(merged[is.na(exclude.all)])
+```
+
+```{r}
+merged %>% 
+    filter(!is.na(exclude.all)) %>% dim
+```
+
+## Plot Raw Data to Check
+
+```{r}
+merged %>% 
+  filter(is.na(exclude.all)) %>%
+    filter((Experiment == 3)|(Experiment == 4)) %>% 
+    filter(grepl("VRN1|VRN3",gene)) %>%
+    ggplot(aes(x=Cp)) +  geom_density(aes(color=gene,linetype=Vern))  +
+    facet_wrap(~ Pp) + ggtitle('Wheat GXE Raw qPCR Data: Experiment 3 +4')
+```
+
+```{r}
+summary(result_dt)
+```
+
+```{r}
+
+```

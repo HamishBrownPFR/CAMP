@@ -1,0 +1,103 @@
+---
+title: "2015-11-23 Compile 384-well qPCR Data"
+author: "John McCallum, Meeghan Pither-Joyce"
+date: "23 November 2015"
+output: word_document
+---
+
+### Data file in iPLant 
+
+https://iplant.plantandfood.co.nz/project/I130806/Research/GEP_qPCR_results.xlsx
+
+
+
+```{r,results='hide'}
+library(readxl)
+library(readr)
+library(lubridate)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+```
+
+## Retrieve a copy from iPlant
+
+- resorted to copying manually
+```{r}
+# dataURL <- "https://iplant.plantandfood.co.nz/project/I130806/Research/GEP_qPCR_results.xlsx?Web=1"
+# GET(dataURL,write_disk("./data/GEP_qPCR_results.xlsx", overwrite=TRUE))
+data_file <- "./data/GEP_qPCR_results.xlsx"
+```
+
+## Read  out sheetlist
+```{r}
+wb_sheets <- excel_sheets(data_file)
+```
+
+## Read out master sheet and translation sheet
+```{r,results='hide'}
+master_dt <- data.table(read_excel(data_file,wb_sheets[[2]],skip=0))
+setnames(master_dt,names(master_dt),gsub('(\\W)+','_',names(master_dt)))
+master_dt[,sample_well := paste(Row,Col,sep="")]
+trans_dt <- data.table(read_excel(data_file,wb_sheets[[3]],skip=0))
+setnames(trans_dt,names(trans_dt),gsub('(\\W)+','_',names(trans_dt)))
+```
+
+## Read out a single sheet 
+```{r}
+my_sheet_name <- wb_sheets[[4]]
+sheet_data <- strsplit(my_sheet_name,split='_')[[1]]
+my_plate <- sheet_data[1]
+my_gene <- sheet_data[2]
+my_df <- data.table(read_excel(data_file,my_sheet_name,skip=1))
+my_df$gene <- my_gene
+my_df$plate <- my_plate
+setnames(my_df,c('Pos','plate'),c('qPCR_well','Plate'))
+my_df
+```
+
+### Check join to master and translation tables
+```{r}
+my_df %>% inner_join(trans_dt) %>% arrange(sample_well)
+```
+
+### Make a helper function
+```{r}
+# read sheet X and return a data.table
+read_qPCR <- function(X) {
+  require(readxl)
+  require(data.table)
+  require(dplyr)
+  wb_path <- data_file
+  my_sheet_data <- strsplit(X,split='_')[[1]]
+  my_plate <- my_sheet_data[1]
+  my_gene <- my_sheet_data[2]
+  my_df <- data.table(read_excel(wb_path,X,skip=1))
+  my_df$gene <- my_gene
+  my_df$plate <- my_plate
+  setnames(my_df,c('Pos','plate'),c('qPCR_well','Plate'))
+  my_df %<>% inner_join(trans_dt,by='qPCR_well') %>% arrange(sample_well)
+  return(my_df)
+}
+
+```
+
+
+## Read out data tables 
+```{r}
+(qPCRdt <- rbindlist(lapply(wb_sheets[4:38],read_qPCR),fill = TRUE))
+```
+
+## Write out to csv
+```{r}
+write_csv(qPCRdt,'./data/GEP_qPCR_results.raw.csv')
+write_csv(master_dt,'./data/GEP_qPCR_samples.csv')
+write_csv(trans_dt,'./data/GEP_qPCR_sample96_384_translation.csv')
+```
+
+
+
+
+
+
+

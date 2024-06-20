@@ -1,0 +1,206 @@
+---
+title: "Inspection of qPCR Sample Date 1 Pilot"
+author: "John McCallum, Meeghan Pither-Joyce, Hamish Brown"
+date: "Wednesday, November 12, 2014"
+output: pdf_document
+---
+
+Inspection of qPCR Sample Date 1 Pilot
+========================================================
+
+
+#### April 2015
+
+--------------
+```{r global_options, include=FALSE}
+library(knitr)
+rm(list=ls())
+opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+               echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+
+```{r}
+library(gdata)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(car)
+
+```
+
+
+**See**  http://www.chem.agilent.com/Library/brochures/Brochure_Guide%20to%20QPCR_IN70200C.pdf
+
+
+### reload raw data
+```{r}
+raw_dt <- fread('Sampledat1_raw.csv',stringsAsFactors=TRUE)
+```
+
+- correct swapped samples Pots 188 and 189
+- see http://iplant.pfr.co.nz/projects/I130806/Planning/Experiment 1 Protocole.docx 
+
+```{r}
+raw_dt[grep("188|189",raw_dt$SampleName)]
+```
+
+
+> Plot 188 and 189 mixed up.  For sample from plot 188, Batten leaf was used when 
+> should be Saracen.  For sample from plot 189, Batten was sampled from plot 188.
+
+```{r}
+raw_dt[grep("188",raw_dt$SampleName)]$SampleName <- "SWAP"
+raw_dt[grep("189",raw_dt$SampleName)]$SampleName <- "188 SCN S2"
+raw_dt[grep("SWAP",raw_dt$SampleName)]$SampleName <-"189 BS S3" 
+raw_dt[grep("188|189",raw_dt$SampleName)]
+```
+
+
+
+### Now plot to inspect Ct
+
+```{r}
+raw_dt %>% ggplot(aes(x=Ct,fill=TargetName)) + 
+  geom_histogram(position='stack') + 
+  facet_grid(geno_set ~ plate ) +
+  ggtitle('Ct raw data-Sample Date 1')
+
+```
+
+### Inspect Ct distribution
+```{r}
+raw_dt %>% filter(Task == 'Unknown' & SampleName != 'extra') %>%
+  separate(SampleName,into=c('num','geno','date'),sep = " ") %>%
+  mutate(date=as.numeric(gsub("S","",date))) %>%
+  ggplot(data=.,aes(x=Ct)) +
+  geom_density(aes(color=TargetName),alpha=0.3) +
+  ggtitle('Sample Date1')
+
+```
+
+```
+
+
+### Inspect Ct distribution in all Samples
+
+- no cutoff applied
+- Otane 10 is nasty
+```{r}
+raw_dt %>% filter(Task == 'Unknown' & SampleName != 'extra') %>%
+  separate(SampleName,into=c('num','geno','date'),sep = " ") %>%
+  mutate(date=as.numeric(gsub("S","",date))) %>%
+  ggplot(data=.,aes(x=Ct)) +
+  geom_density(aes(color=TargetName),alpha=0.3) +
+  facet_grid(geno ~ date) +
+  ggtitle('Sample Date1')
+
+```
+
+### Inspect correlation of Housekeepers
+
+```{r}
+raw_dt %>% 
+  filter(Task == 'Unknown' & (TargetName == "EGF1a" | TargetName == "Ta54227")) %>%
+  spread(TargetName,Ct) %>%
+  ggplot(aes(x=EGF1a,y=Ta54227)) + 
+  geom_text(size=3,aes(label=SampleName,color=geno_set)) +
+  ggtitle('Sample Date1')
+```
+
+### Spread out by gene 
+
+```{r}
+raw_dt %>% filter(Task == 'Unknown') %>%
+  spread(TargetName,Ct) %>%
+   arrange(SampleName)
+```
+
+### Spread out by sample and calculate means by sample
+
+- exclude backup calibrator
+- no Ct CUTOFF 
+
+```{r}
+sample_dt <- tbl_df(raw_dt %>% filter(Task == 'Unknown' & SampleName != 'extra') %>%
+  spread(TargetName,Ct) %>% 
+  group_by(plate,SampleName) %>% 
+  summarise(EGF1a_mean=mean(EGF1a,na.rm=T),
+            Ta54227_mean=mean(Ta54227,na.rm=T),
+            VRN1_mean=mean(VRN1,na.rm=T),
+            VRN2_mean=mean(VRN2,na.rm=T),
+            VRN3_mean=mean(VRN3,na.rm=T)) %>%
+  separate(SampleName, into=c('Pot','Genotype','Time')) %>%
+    mutate(Time=as.numeric(gsub("S","",Time))) %>% 
+    mutate(EdeltaCT_VRN1=2^-(VRN1_mean - EGF1a_mean),
+                     EdeltaCT_VRN2=2^-(VRN2_mean - EGF1a_mean),
+                     EdeltaCT_VRN3=2^-(VRN3_mean - EGF1a_mean)) %>%
+    mutate(TdeltaCT_VRN1=2^-(VRN1_mean -  Ta54227_mean),
+                     TdeltaCT_VRN2=2^-(VRN2_mean -  Ta54227_mean),
+                     TdeltaCT_VRN3=2^-(VRN3_mean -  Ta54227_mean)) %>%
+   arrange(Genotype,Time)
+  )
+ sample_dt
+
+```
+
+### Plot HK Corrected  Values for VRN1
+```{r}
+sample_dt %>% select(1:4, contains('deltaCT_VRN1')) %>%
+  gather(gene,deltaCt,-1:-4) %>%
+  ggplot(aes(x=Time,y=deltaCt)) +
+  geom_point(aes(color=Genotype)) +
+  facet_wrap(~ gene) +
+  ggtitle('Sample date 1: VRN1')
+
+```
+
+### Plot  HK Corrected  Values for VRN2
+```{r}
+sample_dt %>% select(1:4, contains('deltaCT_VRN2')) %>%
+  gather(gene,deltaCt,-1:-4) %>%
+  ggplot(aes(x=Time,y=deltaCt)) +
+  geom_point(aes(color=Genotype)) +
+  facet_wrap(~ gene) +
+  ggtitle('Sample date 1: VRN2')
+
+```
+
+### Plot  HK Corrected  Values for VRN3
+```{r}
+sample_dt %>% select(1:4, contains('deltaCT_VRN3')) %>%
+  gather(gene,deltaCt,-1:-4) %>%
+  ggplot(aes(x=Time,y=deltaCt)) +
+  geom_point(aes(color=Genotype)) +
+  facet_wrap(~ gene) +
+  ggtitle('Sample date 1: VRN3')
+
+```
+
+
+### Inspect IRC data
+```{r}
+raw_dt %>% 
+  filter(Task=='IRC') %>%
+  group_by(plate,TargetName) %>%
+  summarise(mean=mean(Ct)) %>% spread(key = TargetName,value = mean)
+```
+
+### Write to file
+
+```{r}
+write.csv(sample_dt,file='Sampledate1_bysample.csv',row.names=FALSE)
+
+```
+
+
+-------
+
+### Next
+
+*  apply IRC calibration across plates and calculate relative quantity by deltadeltaCt method
+*  see http://www.chem.agilent.com/Library/brochures/Brochure_Guide%20to%20QPCR_IN70200C.pdf
+
+
+

@@ -1,0 +1,106 @@
+---
+title: "Read sample date 3"
+author: "John McCallum, Meeghan Pither-Joyce"
+date: "Tuesday, April 21, 2015"
+output: pdf_document
+---
+
+
+Redaing in qPCR Sample Date 3
+========================================================
+
+### John McCallum, Meeghan Pither-Joyce, Hamish Brown
+
+#### April 2015
+
+--------------
+```{r global_options, include=FALSE}
+library(knitr)
+rm(list=ls())
+opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+               echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+#### Set file location accordingly and get sheetnames
+```{r}
+library(gdata)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(car)
+
+
+### Additional storage snapshot
+my_wb <- "\\\\akldfs12\\iplantfiles\\Science Projects\\I130806\\Exception Files\\04 Research\\qPCR_data\\Pilot_qPCR_results_sample_date_3.xlsx"
+my_wb_url  <- "http://iplant.pfr.co.nz/projects/I130806/Research/Pilot_qPCR_results_sample_date_3.xlsx"
+SampleDate3_workbook <- my_wb
+wb_sheetnames <- sheetNames(SampleDate3_workbook)
+wb_sheetnames<- wb_sheetnames[grep(pattern="coversheet|notes",x=wb_sheetnames,invert = TRUE)]
+```
+
+### Define columns of interest and load reader
+```{r}
+var_labs<- c("Well","SampleName", "TargetName" ,"Task", "Reporter","Ct")
+source(file='./ReadStepOne.R')
+```
+
+
+
+```{r}
+## get correct task factor
+get_stepone_task <- function(sample_str) {
+  if (length(grep("IR CAL",sample_str) > 0)){
+    return("IRC")
+  } else if(sample_str=='N T') {
+    return("NTC")
+  } else {
+    return("Unknown")
+  }
+}
+
+```
+
+
+### Read Plates in a  loop
+
+- then turn into a data.table for ease of manipulation
+- Make task a factor
+- make Ct numeric
+
+
+```{r ,cache=TRUE}
+raw_df <-NULL
+
+for (i in wb_sheetnames) {
+  sheet_data <- strsplit(i,split="_")[[1]]
+  gene<-sheet_data[1]
+  plate<- sheet_data[2]
+  plate_data <- stepone2df(SampleDate3_workbook,i)
+  plate_data <- plate_data[,var_labs] 
+  plate_data$plate <- plate
+  raw_df <- rbind(raw_df,plate_data)
+}
+raw_dt <- data.table(raw_df)
+```
+
+### Function to Correct Task Factor
+
+
+
+## Apply Function to Correct Task factor
+```{r}
+
+raw_dt$Task <- raw_dt$Task <- as.factor(sapply(raw_dt$SampleName,get_stepone_task))
+raw_dt$TargetName <- as.factor(raw_dt$TargetName)
+raw_dt$Ct <- as.numeric(raw_dt$Ct)
+raw_dt$TargetName <- recode(raw_dt$TargetName, "'TaVRN2'='VRN2';c('Ta','TA')='Ta54227';'VRN3-3'='VRN3' " )
+raw_dt
+
+```
+
+
+### Write out raw to csv
+```{r}
+write.csv(raw_dt,file='Sampledate3_raw.csv',row.names=FALSE)
+```

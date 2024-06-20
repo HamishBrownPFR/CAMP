@@ -1,0 +1,84 @@
+---
+title: "Read Sample Date 1 qPCR"
+author: "John McCallum, Meeghan Pither-Joyce"
+date: "Tuesday, April 21, 2015"
+output:
+  pdf_document:
+    toc: yes
+---
+
+
+
+Inspection of qPCR Sample Date 1 Pilot
+========================================================
+
+### John McCallum, Meeghan Pither-Joyce, Hamish Brown
+
+#### Nov 2014
+
+--------------
+```{r global_options, include=FALSE}
+library(knitr)
+rm(list=ls())
+opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+               echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+#### Set file location accordingly and get sheetnames
+```{r}
+library(gdata)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(car)
+
+
+SampleDate1_workbook <- "http://iplant.pfr.co.nz/projects/I130806/Research/Pilot%20qPCR%20results%20-%20sample%20date%201_final.xlsx"
+wb_sheetnames <- sheetNames(SampleDate1_workbook)
+wb_sheetnames<- wb_sheetnames[grep(pattern="coversheet|notes",x=wb_sheetnames,invert = TRUE)]
+```
+
+### Define columns of interest and load reader
+```{r}
+var_labs<- c("Well","SampleName", "TargetName" ,"Task", "Reporter","Ct")
+source(file='./ReadStepOne.R')
+```
+
+
+### Read Control plates in a  loop
+
+- then turn into a data.table for ease of manipulation
+- Make task a factor
+- make Ct numeric
+
+
+```{r ,cache=TRUE}
+raw_df <-NULL
+
+for (i in wb_sheetnames) {
+  sheet_data <- strsplit(i,split = " ")[[1]]
+  gene<-sheet_data[1]
+  geno_set <- sheet_data[2]
+  plate<- substr(i,nchar(i),nchar(i))
+  plate_data <- stepone2df(SampleDate1_workbook,i)
+  plate_data <- plate_data[,var_labs] 
+  plate_data$plate <- plate
+  plate_data$geno_set <- geno_set
+  raw_df <- rbind(raw_df,plate_data)
+}
+raw_dt <- data.table(raw_df)
+raw_dt$Task <- raw_dt$Task <- as.factor(sapply(raw_dt$SampleName,get_stepone_task))
+raw_dt$TargetName <- as.factor(raw_dt$TargetName)
+raw_dt$Ct <- as.numeric(raw_dt$Ct)
+raw_dt$TargetName <- recode(raw_dt$TargetName, "'TaVRN2'='VRN2';c('Ta','TA')='Ta54227';'VRN3-3'='VRN3' " )
+raw_dt
+
+```
+
+
+
+### Write out raw to csv
+```{r}
+write.csv(raw_dt,file='Sampledat1_raw.csv',row.names=FALSE)
+```

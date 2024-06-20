@@ -1,0 +1,230 @@
+---
+title: "2015-11-23 Clean 384-well qPCR Data"
+author: "John McCallum , Meeghan Pither-Joyce"
+date: "23 November 2015"
+output: word_document
+---
+
+Rendered on `r date()`
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+                      echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+## Display Source Control Details
+```{r}
+system("git remote -v",intern = TRUE)
+```
+
+```{r}
+system("git log -1",intern = TRUE)
+```
+
+-----------------
+
+```{r,results='hide'}
+library(lubridate)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(readr)
+library(tidyr)
+library(magrittr)
+```
+
+## Load compiled data , master table 
+```{r}
+qPCRdt <- read_csv("./data/GEP_qPCR_results.raw.csv") %>%
+  select(-starts_with('Tm'))
+master_dt <-  read_csv("./data/GEP_qPCR_samples.csv") %>%
+        mutate(Pp=factor(Pp)) %>%
+        mutate(Vern=factor(tolower(Vern))) %>%
+        mutate(Cult=factor(Cult)) %>%
+        mutate(Experiment=factor(Experiment))
+```
+
+### Load the table of  dodgey samples scheduled for repeats
+
+- and rename vars
+```{r}
+repeats_dt <- suppressWarnings(data.table(read_csv('./data/GEP_qPCR_repeats.csv')))
+repeats_dt <- setnames(repeats_dt,names(repeats_dt),gsub('(\\W)+','_',names(repeats_dt)))
+repeats_dt <- setnames(repeats_dt,c('Sample_Well','Plate_ID',"Date","Cultivar","PP"),
+                       c('sample_well','Plate',"SampleDate","Cult","Pp"))
+repeats_dt  <- repeats_dt %>%
+        mutate(Pp=factor(Pp)) %>%
+        mutate(Vern=factor(tolower(Vern))) %>%
+        mutate(Cult=factor(Cult)) %>%
+        mutate(Experiment=factor(Experiment))
+repeats_dt[,is_repeat:=TRUE]
+##be lazy drop unwanted columns
+repeats_dt %<>% 
+  select(Plate,sample_well,Plot_IDNew,Experiment,Cult,is_repeat)
+```
+
+### Join to master
+```{r}
+master_dt %<>% 
+  left_join(repeats_dt) %>%
+  select(-starts_with('V1')) %>%
+  data.table
+master_dt[is.na(is_repeat),is_repeat:=FALSE]
+```
+
+
+## Check Distribution of Cp
+```{r}
+qPCRdt %>% 
+  inner_join(master_dt) %>%
+  ggplot(aes(x=gene,y=Cp)) + 
+  geom_boxplot() +
+  facet_wrap(~Cult) +
+  ggtitle('GEP Cp Values')
+```
+
+## Check Distribution of Cp, excluding junk
+```{r}
+qPCRdt %>% 
+  inner_join(master_dt) %>%
+ filter(!is_repeat) %>%
+  ggplot(aes(x=gene,y=Cp)) + 
+  geom_boxplot() +
+  facet_wrap(~Cult) +
+  ggtitle('GEP Cp Values')
+```
+
+## Compile means
+```{r}
+dt <- qPCRdt %>% 
+    arrange(Name) %>%
+    spread(gene,Cp) %>%
+    group_by(Plate,Name,sample_well) %>%
+    summarise_each(funs(mean(.,na.rm=TRUE)),-1:-4) %>% 
+    inner_join(master_dt) %>%
+    filter(!is_repeat)  %>% 
+             data.table
+```
+
+### Check sample Housekeeper Cp
+```{r}
+dt %>%
+ggplot(aes(x=Ta54227,y=EGF1a)) +
+geom_point(aes(colour=Plate)) +
+ggtitle('GEP Housekeeper Cps') + 
+  facet_wrap(~ Experiment)
+
+```
+
+### Check time and cultivar effects on Housekeepers
+```{r}
+dt %>% 
+   ggplot(aes(x=SampleDate,y=EGF1a)) +
+    geom_point(aes(color=Plate)) +
+  ggtitle('GEP qPCR: EGF1a Housekeeper')
+
+dt %>% 
+   ggplot(aes(x=SampleDate,y=Ta54227)) +
+    geom_point(aes(color=Plate)) +
+  ggtitle('GEP qPCR: Ta54227 Housekeeper')
+
+```
+
+## Calculate Corrected Values
+
+- first change NaNs to NA
+```{r}
+dt[is.nan(VRN1),VRN1:= NA]
+dt[is.nan(VRN2),VRN2:= NA]
+dt[is.nan(VRN3),VRN3:= NA]
+dt[is.nan(EGF1a),EGF1a:=NA]
+dt[is.nan(Ta54227),Ta54227:=NA]
+```
+
+## Calculate Adjusted Cp
+
+- apply Cp=29 as cutoff
+```{r}
+dt[(Ta54227 < 29) & (EGF1a < 29),VRN1_EGF:=2^-(VRN1-EGF1a)]
+dt[(Ta54227 < 29) & (EGF1a < 29),VRN1_Ta:=2^-(VRN1-Ta54227)]
+dt[(Ta54227 < 29) & (EGF1a < 29) & (is.na(VRN1)),c("VRN1_Ta","VRN1_EGF"):=list(0,0)]
+```
+
+## Ditto for Vrn2
+- apply EGF < 29 as cutoff
+```{r}
+dt[(Ta54227 < 29) & (EGF1a < 29),VRN2_EGF:=2^-(VRN2-EGF1a)]
+dt[(Ta54227 < 29) & (EGF1a < 29),VRN2_Ta:=2^-(VRN2-Ta54227)]
+dt[(Ta54227 < 29) & (EGF1a < 29) & (is.na(VRN2)),c("VRN2_Ta","VRN2_EGF"):=list(0,0)]
+```
+
+## Ditto for Vrn3
+- apply EGF < 29 as cutoff
+```{r}
+dt[(Ta54227 < 29) & (EGF1a < 29),VRN3_EGF:=2^-(VRN3-EGF1a)]
+dt[(Ta54227 < 29) & (EGF1a < 29),VRN3_Ta:=2^-(VRN3-Ta54227)]
+dt[(Ta54227 < 29) & (EGF1a < 29) & (is.na(VRN3)),c("VRN3_Ta","VRN3_EGF"):=list(0,0)]
+
+```
+
+### Inspect VRN1 experiments 3 and 4
+
+```{r}
+dt %>%
+    ggplot(aes(x=SampleDate, y=VRN1_EGF)) +
+    geom_point(aes(shape=Cult)) +
+    geom_smooth(aes(color=Cult),na.rm=TRUE) +
+  facet_wrap(~ Experiment + Vern,nrow = 2,scales = 'free') +
+  ggtitle('VRN1/EGF1a control')
+```
+
+```{r}
+dt %>%
+    ggplot(aes(x=SampleDate, y=VRN1_Ta)) +
+    geom_point(aes(shape=Cult)) +
+    geom_smooth(aes(color=Cult),na.rm=TRUE) +
+  facet_wrap(~ Experiment + Vern,nrow = 2,scales = 'free') +
+  ggtitle('VRN1/Ta54227 control')
+```
+
+### Inspect VRN2 experiments 3 and 4
+```{r}
+dt %>%
+    ggplot(aes(x=SampleDate, y=VRN2_EGF)) +
+    geom_point(aes(shape=Cult)) +
+    geom_smooth(aes(color=Cult),na.rm=TRUE) +
+  facet_wrap(~ Experiment + Vern,nrow = 2,scales = 'free') +
+  ggtitle('VRN2/EGF1a control')
+```
+
+```{r}
+dt %>%
+    ggplot(aes(x=SampleDate, y=VRN2_Ta)) +
+    geom_point(aes(shape=Cult)) +
+    geom_smooth(aes(color=Cult),na.rm=TRUE) +
+  facet_wrap(~ Experiment + Vern,nrow = 2,scales = 'free') +
+  ggtitle('VRN2/Ta54227 control')
+```
+### Inspect VRN3 experiments 3 and 4
+```{r}
+dt %>%
+    ggplot(aes(x=SampleDate, y=VRN3_EGF)) +
+    geom_point(aes(shape=Cult)) +
+    geom_smooth(aes(color=Cult),na.rm=TRUE) +
+  facet_wrap(~ Experiment + Vern,nrow = 2,scales = 'free') +
+  ggtitle('VRN3/EGF1a control')
+```
+
+### Write out cleaned-up data as csv
+```{r}
+write_csv(dt,'./data/GEP_qPCR_results.cleaned.csv')
+
+```
+
+
+
+
+
+
+
+

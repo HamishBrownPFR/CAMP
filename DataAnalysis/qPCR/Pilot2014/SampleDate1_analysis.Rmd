@@ -1,0 +1,263 @@
+Inspection of qPCR Sample Date 1 Pilot
+========================================================
+
+### John McCallum, Meeghan Pither-Joyce, Hamish Brown
+
+#### Sept 2014
+
+--------------
+
+#### Toggle for local or offline
+```{r}
+offsite<- TRUE
+```
+
+#### Set file location accordingly 
+```{r}
+#localfile<- "/Users/johnmccallum/Dropbox/WheatFlowering/qPCR/data/Pilot qPCR results - sample date 1.xlsx"
+localfile<- "C:/Users//cfljam//Dropbox//WheatFlowering//qPCR//data//Pilot qPCR results - sample date 1.xlsx"
+iPlantfile<- "http://iplant.pfr.co.nz/projects/I130806/Research/Pilot qPCR results - sample date 1.xlsx"
+if (offsite) {
+  SampleDate1_workbook <- localfile
+} else {
+  SampleDate1_workbook <- iPlantfile
+}
+```
+
+### Define columnds of interest and load reader
+```{r}
+var_labs<- c("plate","Well","SampleName", "TargetName" ,"Task", "Reporter","Ct")
+source(file='./ReadStepOne.R')
+```
+
+
+### Read Control plates in a  loop
+
+```{r cache=TRUE}
+
+TA_df <-NULL
+
+for (i in seq(1,4)) {
+  NAME<- paste("TA plate",i,sep="")
+  plate<- stepone2df(SampleDate1_workbook,sheetname=NAME)
+  plate$plate<- i
+  plate <- plate[,var_labs] 
+  TA_df <- rbind(TA_df,plate)
+}
+```
+
+### Read EGF1A  plates in a in a loop
+
+```{r cache=TRUE}
+EGF1a_df <-NULL
+for (i in seq(1,4)) {
+  NAME<- paste("EGF1a plate",i,sep="")
+  plate<- stepone2df(SampleDate1_workbook,sheetname=NAME)
+  plate$plate<- i
+  plate <- plate[,var_labs] 
+  EGF1a_df <- rbind(EGF1a_df,plate)
+}
+```
+
+### Read VRN1  plates in a in a loop
+
+```{r cache=TRUE}
+VRN1_df <-NULL
+for (i in seq(1,4)) {
+  NAME<- paste("VRN1 plate",i,sep="")
+  plate<- stepone2df(SampleDate1_workbook,sheetname=NAME)
+  plate$plate<- i
+  plate <- plate[,var_labs] 
+  VRN1_df <- rbind(VRN1_df,plate)
+}
+```
+###Read VRN2  plates in a in a loop
+```{r cache=TRUE}
+VRN2_df <-NULL
+for (i in seq(1,4)) {
+  NAME<- paste("VRN2 plate",i,sep="")
+  plate<- stepone2df(SampleDate1_workbook,sheetname=NAME)
+  plate$plate<- i
+  plate <- plate[,var_labs] 
+  VRN2_df <- rbind(VRN2_df,plate)
+}
+```
+###Read VRN3  plates in a in a loop
+```{r cache=TRUE}
+VRN3_df <-NULL
+for (i in seq(1,4)) {
+  NAME<- paste("VRN3 plate",i,sep="")
+  plate<- stepone2df(SampleDate1_workbook,sheetname=NAME)
+  plate$plate<- i
+  plate <- plate[,var_labs] 
+  VRN3_df <- rbind(VRN3_df,plate)
+}
+```
+
+### Now clean up the data frames
+```{r}
+#doesnt work. Need  a tidier solution than this
+# for (target in c("TA_df","VRN1_df","VRN2_df")) {
+#   levels(target$Task) <- c("IRC",levels(target$Task))
+#   target$Task <- sapply(target$SampleName,get_stepone_task)
+# }
+
+levels(TA_df$Task) <- c("IRC",levels(TA_df$Task))
+TA_df$Task <- sapply(TA_df$SampleName,get_stepone_task)
+TA_df$Ct <- as.numeric(TA_df$Ct)
+
+levels(EGF1a_df$Task) <- c("IRC",levels(EGF1a_df$Task))
+EGF1a_df$Task <- sapply(EGF1a_df$SampleName,get_stepone_task)
+EGF1a_df$Ct <- as.numeric(EGF1a_df$Ct)
+
+
+levels(VRN1_df$Task) <- c("IRC",levels(VRN1_df$Task))
+VRN1_df$Task <- sapply(VRN1_df$SampleName,get_stepone_task)
+VRN1_df$Ct <- as.numeric(VRN1_df$Ct)
+
+levels(VRN2_df$Task) <- c("IRC",levels(VRN2_df$Task))
+VRN2_df$Task <- sapply(VRN2_df$SampleName,get_stepone_task)
+VRN2_df$Ct <- as.numeric(VRN2_df$Ct)
+
+levels(VRN3_df$Task) <- c("IRC",levels(VRN3_df$Task))
+VRN3_df$Task <- sapply(VRN3_df$SampleName,get_stepone_task)
+VRN3_df$Ct <- as.numeric(VRN3_df$Ct)
+```
+### Set Vrn1 and Vrn2 Ct > 34 as missing
+
+see http://blog.ironholds.org/what-the-frck-value-comparison-in-r/
+
+need to use *which* , not e.g.
+
+```
+VRN1_df[VRN1_df$Ct > Ct_cutoff,]$Ct <- NA
+```
+
+```{r}
+Ct_cutoff<- 34
+VRN1_df[which(VRN1_df$Ct > Ct_cutoff),]$Ct  <- NA
+VRN2_df[which(VRN2_df$Ct > Ct_cutoff),]$Ct  <- NA
+VRN3_df[which(VRN3_df$Ct > Ct_cutoff),]$Ct  <- NA
+
+```
+### Stack up data frames into one using data.table
+```{r}
+library(data.table)
+df_list <- list(TA_df,EGF1a_df,VRN1_df,VRN2_df,VRN3_df)
+merged_data <- rbindlist(df_list)
+merged_data$Task <- as.factor(merged_data$Task)
+
+```
+###Summarise targets
+```{r}
+library(psych)
+describeBy(merged_data$Ct,merged_data$TargetName)
+```
+
+----------------
+
+### Split up sample ids to create factors
+
+Ct_control is for TA internal control housekeeper
+```{r}
+library(stringr)
+library(plyr)
+Sample_data<- str_split_fixed(merged_data$SampleName," ",3)
+merged_data$Sample_ID<- Sample_data[,1]
+merged_data$Sample_label<- as.factor(Sample_data[,2])
+merged_data$Sample_date<- as.numeric(gsub("S","",Sample_data[,3]))
+#levels(merged_data$Sample_label) <- revalue(merged_data$Sample_label,c("BS"="Batten Spring","BW"="Batten Winter","S9" = "IRC"))
+```
+
+### plot
+```{r}
+library(ggplot2)
+ggplot(merged_data,aes(x=Ct)) + 
+  geom_density(aes(color=TargetName)) +
+  facet_wrap(~ Sample_label)
+```
+
+### Just plot the Batten
+```{r}
+ggplot(merged_data[which(!is.na(merged_data$Sample_date)),],aes(x=Ct)) +
+  geom_density(aes(fill=TargetName),alpha=0.5) +
+  facet_wrap(~ Sample_label) +
+  ggtitle('Pilot Expt 1 Vrn 1-3 Expression')
+```
+
+### Cast and correct by Housekeeper (Ta in this case)
+
+*no* IRC at this stage
+```{r}
+library(reshape2)
+wide_data<- dcast(merged_data[which(!is.na(merged_data$Sample_date)),],
+                  Well+ Sample_label + Sample_date ~ TargetName ,
+                  value.var = 'Ct',
+                  fun.aggregate = mean)
+wide_data$deltaCT_VRN1 <- wide_data$VRN1 - wide_data$Ta
+wide_data$deltaCT_VRN2 <- wide_data$TaVRN2 - wide_data$Ta
+wide_data$deltaCT_VRN3 <- wide_data$VRN3-3 -  wide_data$Ta
+```
+
+###Inspect un-normalised data graphically
+```{r}
+library(ggplot2)
+ggplot(wide_data,aes(x=Sample_date)) + 
+  geom_point(aes(y=2^-(deltaCT_VRN1),color=Sample_label)) +
+  geom_smooth(aes(y=2^-(deltaCT_VRN1),color=Sample_label)) +
+  ggtitle('Pilot qPCR Study: VRN1') +
+  ylab('Relative expression') +
+  xlab('Sample Number') +
+  scale_x_continuous(breaks=seq(0, 12, 1)) 
+```
+
+###Do for VRN2
+```{r}
+library(ggplot2)
+ggplot(wide_data,aes(x=Sample_date)) + 
+  geom_point(aes(y=2^-(deltaCT_VRN2),color=Sample_label)) +
+  geom_smooth(aes(y=2^-(deltaCT_VRN2),color=Sample_label)) +
+  ggtitle('Pilot qPCR Study: VRN2') +
+  ylab('Relative expression') +
+  xlab('Sample Number') +
+  scale_x_continuous(breaks=seq(0, 12, 1)) 
+
+```
+
+###Do for VRN3
+```{r}
+library(ggplot2)
+ggplot(wide_data,aes(x=Sample_date)) + 
+  geom_point(aes(y=2^-(deltaCT_VRN3),color=Sample_label)) +
+  geom_smooth(aes(y=2^-(deltaCT_VRN3),color=Sample_label)) +
+  ggtitle('Pilot qPCR Study: VRN3') +
+  ylab('Relative expression') +
+  xlab('Sample Number') +
+  scale_x_continuous(breaks=seq(0, 12, 1)) 
+
+```
+
+
+-------
+
+### Next
+
+*  apply IRC calibration across plates and calculate relative quantity by deltadeltaCt method
+*  see http://www.chem.agilent.com/Library/brochures/Brochure_Guide%20to%20QPCR_IN70200C.pdf
+--------------
+###Export Compiled Data as csv
+
+```{r}
+write.csv(wide_data,'Pilot_compiled_data.csv')
+```
+
+###Write to JSON-use this as future default persistent storage type
+```{r tojson}
+library(jsonlite)
+write(toJSON(merged_data),file='./data/Pilot1_merged_df.json')
+
+```
+
+
+
+
