@@ -25,6 +25,7 @@ import matplotlib.dates as mdates
 import CAMP as camp
 import copy
 import json
+import math
 # %matplotlib inline
 
 Envs = ['WL', 'CL', 'WS', 'CS']
@@ -221,69 +222,43 @@ def MakeGenotypeBarPlot(Geno,Axis):
         plt.tick_params(axis='y', which='both', left=True,right=False, labelleft=False)
 
 
-#Bolac -  No PvLN
-#Wylcatchum - negative
-#Sunlanm - positive
-#Axe - little response
-FLNegs = pd.DataFrame(columns = ['CL','WL','CS','WS'])
-for c in ['AXE','BOLAC','WYALKATCHEM']:
-    FLNegs.loc[c,:] = FLNData.loc[(slice(None),slice(None),c),'Value'].groupby(['Photoperiod','VegPhaseTemp']).mean().values
-#FLNegs.to_pickle('FLNegs.pkl')
-
 # +
-Fig = plt.figure(figsize=(8, 2.5))
-pos=1
-for c in FLNegs.index:
-    WL = FLNegs.loc[c,'WL']
-    CL = FLNegs.loc[c,'CL']
-    WS = FLNegs.loc[c,'WS']
-    CS = FLNegs.loc[c,'CS']
-    Axis = Fig.add_subplot(1,3,pos)
-    camp.plotFLNs(CL, CS, WS, WL,Axis,8,20)
-    camp.plotLNlines(CL, CS, WS, WL,8)
-    plt.text(0.05,0.95,c,transform=Axis.transAxes)
-    pos+=1
-    
-plt.tight_layout()
-#Fig.savefig('C:\\Users\\cflhxb\\Dropbox\\WheatFlowering\\Fig1.jpg',format='jpg',dpi=300,bbox_inches="tight")     
-Fig.patch.set_facecolor('white')
+# Fig = plt.figure(figsize=(8, 80))
+# Pos = 1
+# for cul in Cultivars:
+#     Axis = Fig.add_subplot(50,2,Pos)
+#     try:
+#         CL = FLNData.loc[('L','C',cul),'Value'].median()
+#         CS = FLNData.loc[('S','C',cul),'Value'].median()
+#         WS = FLNData.loc[('S','W',cul),'Value'].median() 
+#         WL = FLNData.loc[('L','W',cul),'Value'].median()
+#         camp.plotFLNs(CL,CS,WS,WL,Axis,8,20)
+#         camp.plotLNlines(CL,CS,WS,WL,8)
+#     except:
+#         do = 'nothing'
+        
+#     colors = ['b','b','r','r']
+#     fills = ['b','w','w','r']
+#     SubPos = 0
+#     for Photo,VegT in [('L','C'),('S','C'),('S','W'),('L','W')]:
+#             try:
+#                 y = FLNData.loc[(Photo,VegT,cul),'Value']
+#             except:
+#                 y = []
+#             try:
+#                 x = np.add(list(range(len(y))),SubPos)
+#             except:
+#                 x = []
+#             plt.plot(x,y, 'o', markersize = 6, mec = colors[SubPos],
+#                      mfc=fills[SubPos], label = Photo + " " + VegT)
+#             SubPos +=1
+#     plt.text(0.05,0.85,cul,transform=Axis.transAxes)
+#     Pos += 1
+# Fig.patch.set_facecolor('white')
 # -
 
-Fig = plt.figure(figsize=(8, 80))
-Pos = 1
-for cul in Cultivars:
-    Axis = Fig.add_subplot(50,2,Pos)
-    try:
-        CL = FLNData.loc[('L','C',cul),'Value'].median()
-        CS = FLNData.loc[('S','C',cul),'Value'].median()
-        WS = FLNData.loc[('S','W',cul),'Value'].median() 
-        WL = FLNData.loc[('L','W',cul),'Value'].median()
-        camp.plotFLNs(CL,CS,WS,WL,Axis,8,20)
-        camp.plotLNlines(CL,CS,WS,WL,8)
-    except:
-        do = 'nothing'
-        
-    colors = ['b','b','r','r']
-    fills = ['b','w','w','r']
-    SubPos = 0
-    for Photo,VegT in [('L','C'),('S','C'),('S','W'),('L','W')]:
-            try:
-                y = FLNData.loc[(Photo,VegT,cul),'Value']
-            except:
-                y = []
-            try:
-                x = np.add(list(range(len(y))),SubPos)
-            except:
-                x = []
-            plt.plot(x,y, 'o', markersize = 6, mec = colors[SubPos],
-                     mfc=fills[SubPos], label = Photo + " " + VegT)
-            SubPos +=1
-    plt.text(0.05,0.85,cul,transform=Axis.transAxes)
-    Pos += 1
-Fig.patch.set_facecolor('white')
-
 GenoParams = pd.DataFrame(index = Cultivars)
-FLN = FLNData.groupby(['Photoperiod','VegPhaseTemp','Genotype']).mean()
+FLN = FLNData.select_dtypes(np.number).groupby(['Photoperiod','VegPhaseTemp','Genotype']).mean()
 GenoParams.loc[:,'MinLeafNumber'] = FLN.loc[('L','C'),'Value']
 GenoParams.loc[:,'FLNPPSens'] = FLN.loc[('S','C'),'Value'] - FLN.loc[('L','C'),'Value']
 GenoParams.loc[:,'FLNVnSens'] = FLN.loc[('L','W'),'Value'] - FLN.loc[('L','C'),'Value']
@@ -322,3 +297,65 @@ CampInputs.loc[:,'VrnTreatTemp'] = 5.8
 CampInputs.loc[:,'VrnTreatDuration'] = 60
 CampInputs.loc[:,'Expt'] = 'LaTrobeCE'
 CampInputs.to_excel('./ProcessedData/CEParamsFLN_Aus.xlsx',sheet_name='ObservedParams')
+
+AllCampInputs = pd.read_excel('..\CampVrnParamInputs.xlsx',index_col=0)
+
+graph = plt.figure(figsize=(20,15))
+pan=1
+locMap = {'Axe':1, 'Bolac':2,'Wyalkatchem':3}
+for c in ['Axe','Bolac','Wyalkatchem']:
+    params = camp.deriveVrnParams(AllCampInputs.loc[c,:])
+    ax = graph.add_subplot(4,3,locMap[c])
+    camp.plotVITS(params, 3,ax,c,xmax=11)
+    ax = graph.add_subplot(4,3,locMap[c]+3)
+    camp.boundPlots(params, ax, c,xmax=11)
+    ax = graph.add_subplot(4,3,locMap[c]+6)
+    camp.Vrn2Plots(params,ax,c, ymax=2.5,xmax=6)  
+    ax = graph.add_subplot(4,3,locMap[c]+9)
+    camp.Vrn1Plots(params, ax,c,ymax=2.5,xmax=4)  
+
+
+def openAxies():
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    plt.tick_params(axis='x', which='both', bottom=True,top=False, labelbottom=True)
+    plt.tick_params(axis='y', which='both', left=True,right=False, labelleft=True)
+
+
+camp.deriveVrnParams(AllCampInputs.loc['Axe',:])
+
+Fig = plt.figure(figsize=(10,15))
+locMap = {'AXE':1, 'BOLAC':2,'WYALKATCHEM':3}
+for c in ['AXE','BOLAC','WYALKATCHEM']:
+    CL = FLNData.loc[('L','C',c),'Value'].median()
+    CS = FLNData.loc[('S','C',c),'Value'].median()
+    WS = FLNData.loc[('S','W',c),'Value'].median() 
+    WL = FLNData.loc[('L','W',c),'Value'].median()
+    ax = Fig.add_subplot(5,3,locMap[c])
+    camp.plotFLNs(CL, CS, WS, WL,ax,8,16)
+    camp.plotLNlines(CL, CS, WS, WL,8)
+    plt.text(0.98,0.98,NameMap.loc[c,'StandardName'],transform=ax.transAxes, verticalalignment='bottom',horizontalalignment='right')
+    params = camp.deriveVrnParams(AllCampInputs.loc[NameMap.loc[c,'StandardName'],:])
+    ax = Fig.add_subplot(5,3,locMap[c]+3)
+    figY_X = 1.0474365598206037
+    camp.plotVITS(params, 3,ax,NameMap.loc[c,'StandardName'],xmax=11)
+    openAxies()
+    ax = Fig.add_subplot(5,3,locMap[c]+6)
+    camp.boundPlots(params, ax, NameMap.loc[c,'StandardName'],xmax=11)
+    openAxies()
+    ax = Fig.add_subplot(5,3,locMap[c]+9)
+    camp.Vrn2Plots(params,ax,NameMap.loc[c,'StandardName'], ymax=2.5,xmax=6)  
+    openAxies()
+    ax = Fig.add_subplot(5,3,locMap[c]+12)
+    camp.Vrn1Plots(params, ax,NameMap.loc[c,'StandardName'],ymax=2,xmax=4,figY_X=figY_X)  
+    openAxies()
+plt.tight_layout()
+Fig.savefig('sup4.jpg',format='jpg',dpi=300,bbox_inches="tight")     
+Fig.patch.set_facecolor('white')
+
+## Note the figY_X parameter for the script above is approximated by the height/width retrived below.  
+#However the plt.tight_layout() method alters the dimensions of each plot so the graphs must be generated first, then figY_X calculated
+#the the plots regenerated to give the correct text orrientation
+bbox = ax.get_window_extent().transformed(Fig.dpi_scale_trans.inverted())
+width, height = bbox.width, bbox.height
+height/width

@@ -32,21 +32,37 @@ pd.set_option('display.max_rows',1000)
 
 # ## Bring in data
 
-cult = 'Amarok'
+#cult = 'Amarok'
+cult = 'Kittyhawk'
+#cult = 'Rosella'
+
 
 CampVrnParams = pd.read_excel('CampVrnParams.xlsx',index_col='Cultivar')
-AmarokParams = CampVrnParams.loc[cult,:]
-
-camp.plotVITS(AmarokParams, 3, cult)
+cultParams = CampVrnParams.loc[cult,:]
 
 graph  = plt.figure(figsize=(5,5))
 ax = graph.add_subplot(1,1,1)
-camp.boundPlots(AmarokParams, ax, cult)
+CL, CS, WS, WL = cultParams[['FLN_CL','FLN_CS','FLN_WS','FLN_WL']]
+camp.plotFLNs(CL, CS, WS, WL,ax,8,20)
+camp.plotLNlines(CL, CS, WS, WL,8)
+graph.savefig('FLN.jpg',format='jpg',dpi=300,bbox_inches="tight")
 
 graph  = plt.figure(figsize=(5,5))
 ax = graph.add_subplot(1,1,1)
-camp.Vrn2Plots(AmarokParams,ax,cult)     
+camp.plotVITS(cultParams, 3, ax, cult)
+graph.savefig('VITSHS.jpg',format='jpg',dpi=300,bbox_inches="tight")
 
 graph  = plt.figure(figsize=(5,5))
 ax = graph.add_subplot(1,1,1)
-camp.Vrn1Plots(AmarokParams, ax,cult,5,1.8)    
+camp.boundPlots(cultParams, ax, cult)
+graph.savefig('bounds.jpg',format='jpg',dpi=300,bbox_inches="tight")
+
+graph  = plt.figure(figsize=(5,5))
+ax = graph.add_subplot(1,1,1)
+camp.Vrn2Plots(cultParams,ax,cult,xmax=17.7,ymax=2)   
+graph.savefig('Vrn2.jpg',format='jpg',dpi=300,bbox_inches="tight")
+
+graph  = plt.figure(figsize=(5,5))
+ax = graph.add_subplot(1,1,1)
+camp.Vrn1Plots(cultParams, ax,cult,5,2)
+graph.savefig('Vrn1.jpg',format='jpg',dpi=300,bbox_inches="tight")
