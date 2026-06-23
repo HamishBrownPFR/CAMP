@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.18.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -72,18 +72,22 @@ CultParams = pd.read_excel('..\CampVrnParams.xlsx',engine='openpyxl',index_col=0
 
 
 # +
-def AddVrnPlot(CAMPOutputs,ax,CultName,ylab,xlab,leg):
-    lines=['--','--','--',':','--','-',':']
+def AddVrnPlot(CAMPOutputs,ax,CultName,ylab,xlab,leg,version='Full'):
+    vrnLabs = ['VrnB','Vrn1','MaxVrn2','Vrn2','Vrn3','ApDev','MaxVrn']
+    lines=['--','-','--','-','-','-',':']
     colors=[CBcolors['gray'],CBcolors['blue'],CBcolors['orange'],CBcolors['orange'],CBcolors['purple'],'k','k']
-    p=0
-    vars = ['VrnB','Vrn1','MaxVrn2','Vrn2','Vrn3','ApDev','MaxVrn']
-    for var in vars:
-        y = CAMPOutputs.loc[:,var].where(CAMPOutputs.loc[:,var]!=0,np.nan)
-        plt.plot(CAMPOutputs.loc[:,'HS'],y,label=var,lw=3,color=colors[p],ls=lines[p])
-        p+=1
+    colDict = dict(zip(vrnLabs,colors))
+    linDict = dict(zip(vrnLabs,lines))
+    if version == 'vrn':
+        vrnLabs = ['Vrn1','Vrn2','Vrn3']
+    if version == 'apDev':
+        vrnLabs = ['ApDev','MaxVrn','VrnB']
+    for lab in vrnLabs:
+        y = CAMPOutputs.loc[:,lab].where(CAMPOutputs.loc[:,lab]!=0,np.nan)
+        plt.plot(CAMPOutputs.loc[:,'HS'],y,label=lab,lw=3,color=colDict[lab],ls=linDict[lab])
     TickLabs = CAMPOutputs.loc[:,'Stage'].dropna()
     TickPoss = CAMPOutputs.loc[TickLabs.index,'HS']
-    plt.plot([-2,TickPoss.iloc[2],np.nan,-2,TickPoss.iloc[3]],[1,1,np.nan,2,2],ls='dotted',color='k')
+    plt.plot([-2,TickPoss.iloc[2],np.nan,-2,TickPoss.iloc[4]],[1,1,np.nan,2,2],ls='dotted',color='darkgrey')
     
     if ylab == True:
         plt.ylabel('AppVrn expression',fontsize=12)
@@ -92,21 +96,38 @@ def AddVrnPlot(CAMPOutputs,ax,CultName,ylab,xlab,leg):
     if xlab == True:
         plt.xlabel('Haun Stage',fontsize=12)
         SetStageTicks(ax,TickLabs,TickPoss)
+        AddStageHSValues(ax, TickPoss[2:])
     else:
         plt.tick_params(axis='x', labelbottom=False)
     if leg == True:
-        plt.legend(loc=1)
+        plt.legend(loc='upper left')
 
 def SetStageTicks(ax,TickLabs,TickPoss):
-    TickLabs = ['$G$','$E$','$VI^{HS}$\n('+'%.1f'%TickPoss.iloc[2]+')','$TS^{HS}$\n('+'%.1f'%TickPoss.iloc[3]+')','$FL^{HS}$\n('+'%.1f'%TickPoss.iloc[4]+')']
+    #TickLabs = ['$G$','$E$','$VI^{HS}$\n('+'%.1f'%TickPoss.iloc[2]+')','$TS^{HS}$\n('+'%.1f'%TickPoss.iloc[3]+')','$FL^{HS}$\n('+'%.1f'%TickPoss.iloc[4]+')']
+    TickLabs = ['$G$', '$E$', '$VI^{HS}$', '$TS^{HS}$', '$FL^{HS}$']
     heights = [0,0,1,2,2]
     pos=0
     for x in TickPoss:
-        plt.plot([x,x],[0,heights[pos]],'--',color='k',lw=1)
+        plt.plot([x,x],[0,heights[pos]],ls='dotted',color='darkgrey',lw=1)
         pos+=1
     ax.xaxis.set_major_locator(plt.FixedLocator(TickPoss))
     ax.set_xticklabels(TickLabs)
     plt.tick_params(bottom=True,top=False, rotation=0, labelsize=10)
+    
+def AddStageHSValues(ax, TickPoss, ypos=-0.13,
+                     fontsize=8, color='grey', style='italic'):
+
+    for i, x in enumerate(TickPoss[:]):
+        ax.text(
+            x, ypos,
+            f"({TickPoss.iloc[i]:.1f})",
+            ha='center', va='top',
+            transform=ax.get_xaxis_transform(),
+            fontsize=fontsize,
+            color=color,
+            style=style
+        )
+
     
 def AddTreatInfo(D,T1,P1,T2,P2,Cult,ax,xmax,basePhyllo,germHS):
     plt.plot([germHS+(D*T1)/basePhyllo]*2,[-1,100],'-',color='k',lw=4)
@@ -203,6 +224,110 @@ plt.annotate("",xy=(hc-2.5,vc+.1),xytext=(hc-1.2,vc-.4),arrowprops=dict(color=CB
 plt.annotate("", xy=(hc,vc-1.2), xytext=(hc,vc-0.6), arrowprops=dict(color='k',headwidth=10, headlength=10, width=3)) # Vrn1 to apical development
 
 plt.yticks([0,0.5,1.0,1.5,2.0])
+
+# +
+#produce model data
+length = 300
+startD = 280
+startY = 2001
+CultName = 'PNBattenWinter'
+Days = list(range(startD,366))+list(range(1,startD+length-366))
+Pp = []
+for d in Days:
+    Pp.append(DLF.day_length(d, -42, -6))
+LincolnMet = pd.read_csv('lincoln.met',delim_whitespace=True,skiprows=[0,1,2,3,4,5,7],index_col=['year','day'])
+StartT = LincolnMet.loc[(startY,startD),'mean']
+Tt = [StartT]
+StartTloc = LincolnMet.index.get_loc((startY,startD))
+c = 1
+while c < length:
+    Tt.append(LincolnMet.iloc[c+StartTloc,:].loc['mean'])
+    c+=1
+Params = CultInputs.loc[CultName,:]
+CAMPOutputs = camp.CAMPmodel('',Days,Tt,Pp,Params,
+                               camp.CampConstants,TtEmerge=100)
+
+#Graph
+from matplotlib.gridspec import GridSpec
+
+#FristPlot
+fig = plt.figure(figsize=(8, 3))
+gs = GridSpec(1, 3, width_ratios=[1, 1, 1], wspace=0.05)
+
+ax2 = fig.add_subplot(gs[0, 0])
+AddVrnPlot(CAMPOutputs,ax2,CultName,True,True,True,'apDev')
+plt.xlim(-1.5,13)
+plt.ylim(0,3.1)
+
+ax2.set_xlabel("")
+plt.text(-.05,-0.17,"Haun stage",fontsize=8, color='darkgrey',transform=ax2.transAxes)
+
+ax2.spines['top'].set_visible(False)
+ax2.spines['right'].set_visible(False)
+
+ax2.set_title("A,  Apical Development", fontsize=12,loc="left")
+ax2.title.set_position((0.02, 1.02))
+
+# Right panel: graph
+ax = fig.add_subplot(gs[0, 1])
+ax.set_xlabel("Haun stage")
+ax.set_ylabel("AppVrn expression")
+
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+ax.set_title("B,  Vrn Expression", fontsize=12,loc="left")
+ax.title.set_position((0.02, 1.02))
+
+plt.xlim(-1.5,13)
+plt.ylim(0,3.1)
+AddVrnPlot(CAMPOutputs,ax,CultName,True,True,True,'vrn')
+ax.tick_params(labelleft=False)
+ax.set_ylabel("")
+ax.set_xlabel("")
+plt.text(-.05,-0.17,"Haun stage",fontsize=8, color='darkgrey',transform=ax.transAxes)
+
+# Left panel: schematic
+ax_schem = fig.add_subplot(gs[0, 2])
+plt.xlim(-4.5,4.5)
+plt.ylim(-.8,1.1)
+
+# ---- schematic polygon ----
+from matplotlib.patches import Polygon
+
+hc = -.5
+vc = 0
+ts = 8
+polygon1 = Polygon([(hc-4,vc+.3), (hc,vc+1), (hc+4,vc+.3),(hc+2,vc-.6),(hc-2,vc-.6)],color='lightgrey',alpha=0.3,ec='k')
+#fig, ax = plt.subplots(1,1)
+ax_schem.add_patch(polygon1)
+
+plt.text(hc,vc+.75,'Long\nPhotoperiod',fontsize=ts*1.2,horizontalalignment='center',verticalalignment='center')
+plt.text(hc-2.5,vc+.26,r"$\bf{[Vrn2]}$",fontsize=ts*1.2,color=CBcolors['orange'],horizontalalignment='center',verticalalignment='center')
+plt.text(hc+2.5,vc+.26,r"$\bf{[Vrn3]}$",fontsize=ts*1.2,color=CBcolors['purple'],horizontalalignment='center',verticalalignment='center')
+plt.text(hc,vc-.5,r"$\bf{[Vrn1]}$",fontsize=ts*1.2,color=CBcolors['blue'],horizontalalignment='center',verticalalignment='center')
+plt.text(hc,vc,'Cold\nTemperature',fontsize=ts*1.2,horizontalalignment='center',verticalalignment='center')
+plt.annotate("",xy=(hc-1.8,vc+.4),xytext=(hc-.6,vc+.6),arrowprops=dict(color=CBcolors['orange'],headwidth=10, headlength=10, width=3)) #LPP to Vrn2
+plt.annotate("",xy=(hc+1.8,vc+.4),xytext=(hc+.6,vc+.6),arrowprops=dict(color=CBcolors['purple'],headwidth=10, headlength=10, width=3)) #LPP to Vrn3
+plt.annotate("",xy=(hc,vc-.4),xytext=(hc,vc-.15),arrowprops=dict(color=CBcolors['blue'],headwidth=10, headlength=10, width=3))  #Cold to Vrn1
+plt.annotate("",xy=(hc+1.2,vc-.45),xytext=(hc+2.5,vc+.15),arrowprops=dict(color=CBcolors['purple'],headwidth=10, headlength=10, width=3)) #Vrn3 to Vrn1
+plt.annotate("",xy=(hc+1.4,vc+.25),xytext=(hc-1.4,vc+.25),arrowprops=dict(color=CBcolors['orange'],headwidth=10, headlength=.1, width=3)) #Vrn2 to vrn3
+plt.annotate("",xy=(hc-2.5,vc+.1),xytext=(hc-1.2,vc-.4),arrowprops=dict(color=CBcolors['blue'],headwidth=10, headlength=.1, width=3)) #Vrn1 to vrn2
+plt.annotate("", xy=(hc,vc-1.2), xytext=(hc,vc-0.6), arrowprops=dict(color='k',headwidth=10, headlength=10, width=3)) # Vrn1 to apical development
+#plt.title("(C) G x E interactions", loc = 'left',ha="center", va="bottom",fontsize = 12)
+ax_schem.set_title("C, G x E interactions", fontsize=12,loc="left")
+ax_schem.title.set_position((-120, 1.02))
+
+
+ax_schem.set_axis_off()
+
+
+fig.savefig(
+    r"C:\Users\Cflhxb\Desktop\CAMP Paper\figure_1.tif",
+    format="tiff",
+    dpi=300,
+    bbox_inches="tight"
+)
 # -
 
 Fig = plt.figure(figsize=(7,6))
