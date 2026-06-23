@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.18.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -28,6 +28,7 @@ import matplotlib.dates as mdates
 import CAMP as camp
 # %matplotlib inline
 
+# +
 #Example figure using Brooking and Jamieson Data
 Fig = plt.figure(figsize=(3,3))
 Axis = Fig.add_subplot(1,1,1)
@@ -37,6 +38,13 @@ WS = 14
 WL = 18
 camp.plotFLNs(CL,CS,WS,WL,Axis,8,20)
 camp.plotLNlines(CL, CS, WS, WL,8)
+
+Fig.savefig(
+    r"C:\Users\Cflhxb\Desktop\CAMP Paper\figure_2.tif",
+    format="tiff",
+    dpi=300,
+    bbox_inches="tight"
+)
 
 # +
 PP16NonSD = dt.date(2014,1,28)
@@ -122,7 +130,7 @@ for Pp in Photoperiods:
 Fig.patch.set_facecolor('white')
 
 # +
-CultNames = pd.DataFrame(index = Cultivars,columns=['Name'],data=["'Otane'","'Batten' spring","'Saracen'","'Batten' winter","'Amarok'",'CRWT153'])
+CultNames = pd.DataFrame(index = Cultivars,columns=['Name'],data=["Otane","Batten spring","'Saracen'","Batten winter","'Amarok'","'CRWT153'"])
 
 AllFLNData = Data.loc['YES',:].HS.reset_index().drop(['Date','Sample'],axis=1)
 
@@ -153,7 +161,7 @@ for cult in Cultivars:
     WL = PhenoStages.loc[(16,'Nil',cult),'FLN']
     
     camp.plotFLNs(CL,CS,WS,WL,Axis,8,20)
-    camp.plotLNlines(CL, CS, WS, WL,8)
+    #camp.plotLNlines(CL, CS, WS, WL,8)
     Axis.spines['right'].set_visible(False)
     Axis.spines['top'].set_visible(False)
     if Pos in [5,6]:
@@ -169,9 +177,15 @@ for cult in Cultivars:
 plt.tight_layout()
 #Fig.savefig('C:\\Users\\cflhxb\\Dropbox\\WheatFlowering\\Fig3.jpg',format='jpg',dpi=300)  
 Fig.patch.set_facecolor('white')
+Fig.savefig(
+    r"C:\Users\Cflhxb\Desktop\CAMP Paper\figure_4.tif",
+    format="tiff",
+    dpi=300,
+    bbox_inches="tight"
+)
 
 # +
-CultNames = pd.DataFrame(index = Cultivars,columns=['Name'],data=["'Otane'","'Batten' spring","'Saracen'","'Batten' winter","'Amarok'",'CRWT153'])
+#CultNames = pd.DataFrame(index = Cultivars,columns=['Name'],data=["'Otane'","'Batten' spring","'Saracen'","'Batten' winter","'Amarok'",'CRWT153'])
 
 AllFLNData = Data.loc['YES',:].HS.reset_index().drop(['Date','Sample'],axis=1)
 
@@ -464,10 +478,12 @@ PhenoStages.to_csv('.\ProcessedData\PhenoStages.csv',header=True)
 
 # ## Make graph of Organ number against Haun Stage
 
+Photoperiods
+
 Index = pd.MultiIndex.from_product([Photoperiods,Vernalisations],names = ['Photoperiod','Vernalisation'])
 colors = pd.DataFrame(index = Index, columns = ['mec','mfc','alpha'],
             data=np.transpose([['b','r','b','r'],['b','r','w','w'],[0.2,0.2,0.5,0.5]]))
-PpSymbols = pd.DataFrame(index = Photoperiods,columns=['Name'],data=['$(L)$','$(S)$'])
+PpSymbols = pd.DataFrame(index = Photoperiods,columns=['Name'],data=['$L$','$S$'])
 colors.alpha = pd.to_numeric(colors.alpha)
 Fig = plt.figure(figsize=(6.92,6.92))
 Position = 1 
@@ -477,7 +493,10 @@ for Cultivar in Cultivars:
         ax.set_prop_cycle(color=['k','r','r','r','g','g','g'])
         cult = CultNames.loc[Cultivar,'Name']
         PpSym = PpSymbols.loc[Pp,'Name']
-        plt.text(0.05,0.95,cult + ' ' + PpSym, fontsize=10, transform=ax.transAxes)
+        #plt.text(0.05,0.95,cult + ' ' + PpSym, fontsize=10, transform=ax.transAxes)
+        plt.text(0.05,0.9,PpSym, fontsize=10, transform=ax.transAxes)
+        if Pp == 16:
+            plt.text(1.2,1.06,cult, fontsize=12, transform=ax.transAxes,  horizontalalignment='center', verticalalignment='center')        
         plt.plot(BaseHS[0:4],BaseON[0:4], '-', linewidth = 2, label='Base Rate');
         for Vern in Vernalisations:
             plt.plot(Data.loc[('NO',Pp,Vern,Cultivar),'HS'], 
@@ -525,9 +544,15 @@ for Cultivar in Cultivars:
         else:
             plt.tick_params(axis='y', which='both', left=True,right=False, labelleft=True)
         Position += 1
-plt.tight_layout()
+#plt.tight_layout()
 #Fig.savefig('C:\\Users\\cflhxb\\Dropbox\\WheatFlowering\\Fig5.jpg',format='jpg',dpi=300)  
 Fig.patch.set_facecolor('white')
+Fig.savefig(
+    r"C:\Users\Cflhxb\Desktop\CAMP Paper\figure_3.tif",
+    format="tiff",
+    dpi=300,
+    bbox_inches="tight"
+)
 
 PhenoStages.loc[PhenoStages.index.isin(['BattenSpring'],2),:]
 
@@ -630,7 +655,7 @@ for cult in Cultivars:
         plt.bar(ind, PhenoStages.loc[[(16,'Full',cult),(8,'Full',cult),(16,'Nil',cult),(8,'Nil',cult)],var], 
                 width,# align='edge',
                 edgecolor=['b','b','r','r'], color = ['b','w','r','w'],
-                linewidth=5,alpha=0.4)
+                linewidth=2,alpha=0.4)
         plt.tick_params(labelsize=10)
         plt.ylim(0,12)
         Axis.spines['right'].set_visible(False)
@@ -638,10 +663,10 @@ for cult in Cultivars:
         CultName = CultNames.loc[cult,'Name']
         if Pos % 2 == 0:
             plt.tick_params(axis='y', which='both', left=True,right=False, labelleft=False)
-            plt.text(.05,.8,'$TS^{HS}-VS^{HS}$',transform=Axis.transAxes,fontsize=10)
+            plt.text(.05,.8,'$TS^{HS}-VI^{HS}$',transform=Axis.transAxes,fontsize=10)
         else:
             plt.ylabel('Haun Stage')
-            plt.text(.05,.8,'$VS^{HS}$',transform=Axis.transAxes,fontsize=10)
+            plt.text(.05,.8,'$VI^{HS}$',transform=Axis.transAxes,fontsize=10)
             plt.text(1.06,1.06,"    "+CultName,
                      horizontalalignment='center',transform=Axis.transAxes,fontsize=12)
         if Pos <11:
@@ -655,3 +680,9 @@ for cult in Cultivars:
 #plt.tight_layout()
 #Fig.savefig('C:\\Users\\cflhxb\\Dropbox\\WheatFlowering\\Fig6.jpg',pad_inches=10,dpi=300)
 Fig.patch.set_facecolor('white')
+Fig.savefig(
+    r"C:\Users\Cflhxb\Desktop\CAMP Paper\figure_5.tif",
+    format="tiff",
+    dpi=300,
+    bbox_inches="tight"
+)

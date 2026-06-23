@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.18.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -49,16 +49,21 @@ PhenoStages.loc[:,'FLTT'] = [np.interp(PhenoStages.loc[x,'FLN'],BaseHSTT,BaseTT)
 PhenoStages.loc[:,'TSTT'] = [np.interp(PhenoStages.loc[x,'HSTS'],BaseHSTT,BaseTT)for x in PhenoStages.index]
 PhenoStages.loc[:,'FITT'] = [np.interp(PhenoStages.loc[x,'HSFI'],BaseHSTT,BaseTT)for x in PhenoStages.index]
 PhenoStages.set_index(['PhotoP','Vern','Cult'],inplace=True)
-VrnExpression = pd.read_pickle('..\\dataAnalysis\\RawData\\NZ_CE\\VrnExpression.pkl')
+VrnExpression = pd.read_pickle('..\\dataAnalysis\\qPCR\\VrnExpression.pkl')
 VrnExpression.columns.values[0]='Vrn1'
 VrnExpression.columns.values[1]='Vrn2'
 VrnExpression.columns.values[2]='Vrn3'
+VrnExpression_2HKNormalized = pd.read_pickle('..\\dataAnalysis\\qPCR\\VrnExpression_2HKNormalized.pkl')
+VrnExpression_2HKNormalized.columns.values[0]='Vrn1'
+VrnExpression_2HKNormalized.columns.values[1]='Vrn2'
+VrnExpression_2HKNormalized.columns.values[2]='Vrn3'
 Pps = VrnExpression.Pp.drop_duplicates()
 Verns = VrnExpression.Vern.drop_duplicates()
 # ## Make a dataframe of model outputs for each treatment
 Cultivars
 
-ObsRelExp = VrnExpression.set_index(['Cult','Vern','Pp','SampleDate'],drop=False)#.where(VrnExpression.isnull()==False,other=0)#.groupby(level=['Cult','Vern','Pp','SampleDate']).median(numeric_only=True)
+#ObsRelExp = VrnExpression.set_index(['Cult','Vern','Pp','SampleDate'],drop=False)#.where(VrnExpression.isnull()==False,other=0)#.groupby(level=['Cult','Vern','Pp','SampleDate']).median(numeric_only=True)
+ObsRelExp = VrnExpression_2HKNormalized.set_index(['Cult','Vern','Pp','SampleDate'],drop=False)#.where(VrnExpression.isnull()==False,other=0)#.groupby(level=['Cult','Vern','Pp','SampleDate']).median(numeric_only=True)
 ObsRelExp.sort_index(inplace=True)
 ObsRelExp = ObsRelExp.where(ObsRelExp.isnull()==False,other=0)
 # +
@@ -101,14 +106,14 @@ def SetStageTicks(ax,TickLabs,TickPoss):
     #heights = [-2,-2,2,2,2]
     pos=0
     for x in TickPoss[2:]:
-        plt.plot([x,x],[0,2],'--',color='k',lw=1)
+        plt.plot([x,x],[0,2],'--',color='grey',lw=1)
         pos+=1
     ax.xaxis.set_major_locator(plt.FixedLocator(TickPoss[2:]))
     ax.set_xticklabels(TickLabs[2:])
     plt.tick_params(bottom=True,top=False, rotation=0, labelsize=10)
 
 
-CampPred.loc[('Otane','Nil',8),Gene] + CampPred.loc[('Otane','Nil',8),'VrnB']
+CampPred.columns
 
 #Frist copy date and make frame with indexes set
 Cultivars = ['Otane', 'BattenSpring', 'Saracen', 'BattenWinter', 'Amarok', 'CRWT153']
@@ -117,7 +122,7 @@ VernDurats = pd.DataFrame(index=Verns.values,data=[0,100],columns=['Durat'])
 PpSymbols = pd.DataFrame(index = [16,8],columns=['Name'],data=['L','S'])
 cols = [CBcolors['blue'],CBcolors['orange'],CBcolors['purple']]
 VrnLabs = pd.DataFrame(index=['Full','Nil'],columns=['Lab'],data=['C','W'])
-Fig2 = plt.figure(figsize=(6.92,9.2))
+Fig2 = plt.figure(figsize=(6.92,11))
 pos = 1
 for Cult in ['Otane', 'BattenSpring', 'Saracen', 'BattenWinter', 'Amarok', 'CRWT153']:
     TrtCnt = 1
@@ -160,7 +165,11 @@ for Cult in ['Otane', 'BattenSpring', 'Saracen', 'BattenWinter', 'Amarok', 'CRWT
                     camp_vmax = CampPred.loc[:,Gene].max()
                 PredRelAct_vi = camp_vi/camp_vmax * ObsRelAct_vcmax
                 plt.plot(ObsRelExp.loc[(Cult,Vern,Pp),'Tt'],ObsRelAct_vi,'o',ms=5,color=cols[colpos])
-                plt.plot(CampPred.loc[(Cult,Vern,Pp),'Tt'].cumsum(),PredRelAct_vi,lw=3,color=cols[colpos],label = '_nolegend_')
+                if Gene == 'Vrn1':
+                    lab = 'Vrn1+VrnB'
+                else:
+                    lab = Gene
+                plt.plot(CampPred.loc[(Cult,Vern,Pp),'Tt'].cumsum(),PredRelAct_vi,lw=3,color=cols[colpos],label=lab)
                 #print(Cult + Gene + " "+str(ObsRelAct_vcmax))
                 colpos+=1
             TickLabs = CampPred_gvp.loc[:,'Stage'].dropna()
@@ -169,29 +178,42 @@ for Cult in ['Otane', 'BattenSpring', 'Saracen', 'BattenWinter', 'Amarok', 'CRWT
             plt.ylim(-0.05,1.1)
             plt.xlim(0,2550)
             CultName = CultNames.loc[Cult,'Name']
-            label = CultName + '\n' +VrnLabs.loc[Vern,'Lab'] + ' '  + PpSymbols.loc[Pp,'Name']
-            t = plt.text(0.95,0.7,label,fontsize=10,transform=ax.transAxes,horizontalalignment='right')
-            t.set_bbox(dict(facecolor='white', alpha=0.75, edgecolor='white'))
-            if pos == 1:
-                plt.legend(loc=4, fontsize=8)
+            #label = CultName + '\n' +VrnLabs.loc[Vern,'Lab'] + ' '  + PpSymbols.loc[Pp,'Name']
+            if (Vern == 'Full') and (Pp == 16):
+                plt.text(0.05,1.06,CultName,fontsize=12,transform=ax.transAxes,horizontalalignment='left')
+            label = VrnLabs.loc[Vern,'Lab'] + ' '  + PpSymbols.loc[Pp,'Name']
+            t = plt.text(0.95,0.9,label,fontsize=10,transform=ax.transAxes,horizontalalignment='right')
+            t.set_bbox(dict(facecolor='white', alpha=0.0, edgecolor='white'))
+            if pos == 4:
+                #plt.legend(loc=4, fontsize=8)
+                handles, labels = ax.get_legend_handles_labels()
+                Fig2.legend(
+                    handles,
+                    labels,
+                    loc="upper right",
+                    bbox_to_anchor=(0.95, 1.0),
+                    ncol=3,
+                    frameon=False
+                )
+
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
             plt.tick_params(axis='x', which='both', bottom=True,top=False, labelbottom=True,labelsize=10)
             plt.tick_params(axis='y', which='both', left=True,right=False, labelbottom=True,labelsize=10)
-            # if pos <= 20:
-            #     do = 'nothing' #ax.tick_params(labelbottom=False)
-            # else:
-            #     plt.xlabel('Haun Stage',fontsize=12)
-            #ax.tick_params(labelbottom=False)
             ax.tick_params(labelleft=False)
             if pos in [1,5,9,13,17,21]:
                 ax.tick_params(labelleft=True)
-#             if pos == 9:
-#                 plt.text(-.45,.4,'Relative expression',transform=ax.transAxes,rotation=90,fontsize=12)
             pos += 1
             TrtCnt += 1    
 Fig2.patch.set_facecolor('white')
 plt.tight_layout()
+plt.text(-3.85,3.6,'Relative expression',transform=ax.transAxes,rotation=90,fontsize=12)
+Fig2.savefig(
+    r"C:\Users\Cflhxb\Desktop\CAMP Paper\figure_6.tif",
+    format="tiff",
+    dpi=300,
+    bbox_inches="tight"
+)
 
 CultParams.columns
 
@@ -232,6 +254,11 @@ for c in Cultivars:
     pos +=1
 Graph.patch.set_facecolor('white')
 
+Cultivars
+
+# +
+CultNames = pd.DataFrame(index = Cultivars,columns=['Name'],data=["Otane","Batten spring","'Saracen'","Batten winter","'Amarok'","'CRWT153'"])
+
 Graph = plt.figure(figsize=(6,6))
 pos=1
 mecs = ['b','b','r','r']
@@ -246,7 +273,7 @@ for c in Cultivars:
             plt.plot(FLNData.loc[(c,v,p),'FLN'],FLNData.loc[(c,v,p),'PredFLN'],
                     ms[mp],mec=mecs[mp],mfc=mfcs[mp],ms=10,mew=2,label = v+ ' '+str(p)+'h')
             mp +=1
-    plt.text(0.05,0.9,c,transform=ax.transAxes)
+    plt.text(0.05,0.9,CultNames.loc[c,'Name'],transform=ax.transAxes)
     #if pos==1:
     #    plt.legend(loc=4)
     plt.plot([6,19],[6,19],'-',color='k')
@@ -255,6 +282,13 @@ for c in Cultivars:
     pos +=1
 Graph.patch.set_facecolor('white')
 plt.tight_layout()
+Graph.savefig(
+    r"C:\Users\Cflhxb\Desktop\CAMP Paper\figure_7.tif",
+    format="tiff",
+    dpi=300,
+    bbox_inches="tight"
+)
+# -
 
 # # Brooking and Jamieson tests
 
